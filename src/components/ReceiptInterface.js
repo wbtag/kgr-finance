@@ -1,11 +1,11 @@
 'use client'
 import React, { useEffect, useRef, useState } from "react";
-import { request } from "./lib/request";
 import Tagify from '@yaireo/tagify';
 import { useRouter } from "next/navigation";
 import { useStateHandler } from "./lib/useStateHandler";
+import { createNewReceipt } from "./lib/cosmosLibrary";
 
-export default function ReceiptInterface() {
+export default function ReceiptInterface({ tags }) {
 
     const router = useRouter();
 
@@ -41,12 +41,12 @@ export default function ReceiptInterface() {
             receiptType
         };
 
-        const response = await request(`${process.env.NEXT_PUBLIC_FUNCTIONS_DOMAIN}/api/receipts/new`, 'POST', {}, receiptBody);
-        if (!response.error) {
+        try {
+            await createNewReceipt(receiptBody);
             stateHandler.clearForm();
             window.alert('Účtenka úspěšně zaevidována');
-        } else {
-            window.alert(response.error.message);
+        } catch (e) {
+            window.alert(e.message);
         }
     }
 
@@ -57,7 +57,6 @@ export default function ReceiptInterface() {
         tagify.current = new Tagify(inputElem, {
             whitelist: tags,
             dropdown: {
-                classname: "select",
                 enabled: 0,
                 maxItems: 5,
                 position: "text",
@@ -66,15 +65,7 @@ export default function ReceiptInterface() {
             }
         }
         );
-        getTags();
     }, [receiptType]);
-
-    const [tags, setTags] = useState([]);
-    const getTags = async () => {
-        const response = await request(`${process.env.NEXT_PUBLIC_FUNCTIONS_DOMAIN}/api/tags`, 'GET', {}, null);
-        tagify.current.whitelist = response;
-        setTags(response);
-    }
 
     const goHome = () => {
         router.push('/');
@@ -87,7 +78,7 @@ export default function ReceiptInterface() {
     return (
         <>
             <div className="pad">
-                <button onClick={goHome}>Zpět na přehled</button>
+                <button className="button" onClick={goHome}>&lt; Zpět na přehled</button>
                 <h1 className="pad-vertical">Nový účet</h1>
                 <div className='flex-row'>
                     <Switcher name='simple' text='Základní' />
@@ -231,10 +222,6 @@ function ReceiptItem({ stateHandler, index, tags }) {
             }
         });
     }, []);
-
-    useEffect(() => {
-        tagify.current.whitelist = tags
-    }, [[tags]])
 
     const {
         formData,

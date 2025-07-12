@@ -2,29 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { request } from "./lib/request";
+import { getRecentReceipts } from "./lib/cosmosLibrary";
 
-export default function SpendInterface() {
+export default function SpendInterface({weeklySpend}) {
 
     const router = useRouter();
 
-    const [weeklySpend, setWeeklySpend] = useState('');
-    const [remainingSpend, setRemainingSpend] = useState('');
     const dayOfWeek = new Date().getDay();
-
-    const getWeeklySpend = async () => {
-        const response = await request(`${process.env.NEXT_PUBLIC_FUNCTIONS_DOMAIN}/api/spend/weekly`, 'GET', {}, null);
-        setWeeklySpend(response.spend);
-        setRemainingSpend(4200 - response.spend);
-    }
+    const remainingSpend = 4200 - weeklySpend;
 
     const goToReceiptInterface = () => {
         router.push('/receipt');
     }
-
-    useEffect(() => {
-        getWeeklySpend()
-    }, []);
 
     return (
         <>
@@ -51,13 +40,13 @@ function RecentReceipts() {
 
     const [receipts, setReceipts] = useState([]);
 
-    const getRecentReceipts = async () => {
-        const response = await request(`${process.env['NEXT_PUBLIC_FUNCTIONS_DOMAIN']}/api/receipts/recent`);
+    const getReceipts = async () => {
+        const response = await getRecentReceipts();
         setReceipts(response);
     };
 
     useEffect(() => {
-        getRecentReceipts();
+        getReceipts();
     }, []);
 
     return (

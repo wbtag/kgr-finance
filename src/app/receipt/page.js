@@ -1,11 +1,14 @@
-'use client'
 import ReceiptInterface from "@/components/ReceiptInterface";
+import { getTags } from "@/components/lib/cosmosLibrary";
 
-export default function ReceiptPage() {
+export default async function ReceiptPage() {
+
+    const tags = await getTags();
+
     return (
         <>
             <div>
-                <ReceiptInterface/>
+                <ReceiptInterface tags={tags}/>
             </div>
         </>
     )
