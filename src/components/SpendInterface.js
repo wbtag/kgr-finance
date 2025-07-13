@@ -19,7 +19,7 @@ export default function SpendInterface({weeklySpend}) {
         <>
             <div>
                 {weeklySpend && typeof weeklySpend === 'number' ?
-                    <div className="pad">
+                    <div className="pad pad-top">
                         <p>Náklady za tento týden: {weeklySpend} Kč</p>
                         <p>Zbývá tento týden: {remainingSpend} Kč</p>
                         <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
