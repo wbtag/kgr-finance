@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Tagify from '@yaireo/tagify';
 import { useRouter } from "next/navigation";
 import { useStateHandler } from "./lib/useStateHandler";
-import { createNewReceipt } from "./lib/cosmosLibrary";
+import { createNewReceipt } from "./lib/mongoLibrary";
 
 export default function ReceiptInterface({ tags }) {
 

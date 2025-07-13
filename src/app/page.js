@@ -1,5 +1,5 @@
 import SpendInterface from "@/components/SpendInterface";
-import { getWeeklySpend } from "@/components/lib/cosmosLibrary";
+import { getWeeklySpend } from "@/components/lib/mongoLibrary";
 
 export default async function Page() {
 

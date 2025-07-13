@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRecentReceipts } from "./lib/cosmosLibrary";
+import { getRecentReceipts } from "./lib/mongoLibrary";
 
-export default function SpendInterface({weeklySpend}) {
+export default function SpendInterface({ weeklySpend }) {
 
     const router = useRouter();
 
@@ -18,19 +18,13 @@ export default function SpendInterface({weeklySpend}) {
     return (
         <>
             <div>
-                {weeklySpend && typeof weeklySpend === 'number' ?
-                    <div className="pad">
-                        <p>Náklady za tento týden: {weeklySpend} Kč</p>
-                        <p>Zbývá tento týden: {remainingSpend} Kč</p>
-                        <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
-                        <button className="button" onClick={goToReceiptInterface}>Zadat novou útratu</button>
-                        <RecentReceipts />
-                    </div>
-                    : <div>
-                        <p>Načítá se...</p>
-                    </div>
-                }
-
+                <div className="pad">
+                    <p>Náklady za tento týden: {weeklySpend} Kč</p>
+                    <p>Zbývá tento týden: {remainingSpend} Kč</p>
+                    <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
+                    <button className="button" onClick={goToReceiptInterface}>Zadat novou útratu</button>
+                    <RecentReceipts />
+                </div>
             </div>
         </>
     )
