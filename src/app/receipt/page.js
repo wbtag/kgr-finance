@@ -1,5 +1,5 @@
 import ReceiptInterface from "@/components/ReceiptInterface";
-import { getTags } from "@/components/lib/cosmosLibrary";
+import { getTags } from "@/components/lib/mongoLibrary";
 
 export default async function ReceiptPage() {
 
@@ -8,7 +8,7 @@ export default async function ReceiptPage() {
     return (
         <>
             <div>
-                <ReceiptInterface tags={tags}/>
+                <ReceiptInterface tags={tags} />
             </div>
         </>
     )
