@@ -45,7 +45,7 @@ export async function getWeeklySpend() {
     startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
     const startTimestamp = startOfWeekDate.setHours(0, 0, 0, 0);
 
-    const query = `SELECT * FROM c WHERE c._ts > ${Math.floor(startTimestamp / 1000)}`;
+    const query = `SELECT * FROM c WHERE c.date >= ${startTimestamp}`;
 
     let { resources } = await containerClient.items.query(query).fetchAll();
 
