@@ -14,9 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read #This is required for actions/checkout
-    env:
-      MongoDbUrl: ${{ secrets.MongoDbUrl }}
-      MongoDbDatabaseName: ${{ secrets.MongoDbDatabaseName }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,14 +29,11 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Zip build for deployment
-        run: zip -r app.zip .next public package.json package-lock.json
-
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: app.zip
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -57,9 +51,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_720DF0C3CE6040A6AEC18ACC98937EC1 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_36F4F590F6DE481FAB2D94A05F04C4B5 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_6FE0FB14E30347B3BBF1F7E55BCABC0D }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E841A7293F73430A9E5AC932F24311D6 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2BCE0177EE2647849B023BBCD181D616 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E16F61B11D63440D863136B2C05D7FD3 }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -67,5 +61,5 @@ jobs:
         with:
           app-name: 'kgrfin'
           slot-name: 'Production'
-          package: app.zip
+          package: .
           
