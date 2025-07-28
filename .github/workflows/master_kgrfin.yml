@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read #This is required for actions/checkout
+    env:
+      MongoDbUrl: ${{ secrets.MongoDbUrl }}
+      MongoDbDatabaseName: ${{ secrets.MongoDbDatabaseName }}
 
     steps:
       - uses: actions/checkout@v4
