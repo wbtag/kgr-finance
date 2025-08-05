@@ -1,13 +1,16 @@
 'use client'
 
 import Tagify from "@yaireo/tagify";
-import { useEffect, useState } from "react"
-import { getReceipts, getSpend } from "../lib/mongoLibrary";
+import { useEffect, useState, useRef } from "react"
+import { getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
 import { getColumns } from './columns';
 import { DataTable } from "./data-table";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
-export default function SpendQuery({ tags }) {
+export default function SpendQuery() {
+
+    const router = useRouter();
 
     const [queryData, setQueryData] = useState({
         dateFrom: new Date().toISOString().split('T')[0],
@@ -18,10 +21,19 @@ export default function SpendQuery({ tags }) {
     const [spend, setSpend] = useState(0);
     const [receipts, setReceipts] = useState([]);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
+    const [tags, setTags] = useState([]);
+
+    const fetchTags = async () => {
+        const tags = await getTags();
+        setTags(tags);
+        tagify.current.whitelist = tags;
+    };
+
+    const tagify = useRef(null);
 
     useEffect(() => {
         const inputElem = window.document.querySelector('input[name=tags]');
-        const tagify = new Tagify(inputElem, {
+        tagify.current = new Tagify(inputElem, {
             whitelist: tags,
             dropdown: {
                 enabled: 0,
@@ -31,6 +43,7 @@ export default function SpendQuery({ tags }) {
                 highlightFirst: true
             }
         });
+        fetchTags();
     }, []);
 
     const query = async (e) => {
@@ -49,8 +62,13 @@ export default function SpendQuery({ tags }) {
         }));
     };
 
+    const goHome = () => {
+        router.push('/');
+    }
+
     return (
         <>
+            <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
             <div className="pad pad-top">
                 <form className="form" onSubmit={query}>
                     <label className="min-margin">Datum od</label>
@@ -61,17 +79,25 @@ export default function SpendQuery({ tags }) {
                     <input name="tags" value={queryData.tags} onChange={handleInput}></input>
                     <button className="min-margin" type="submit">OK</button>
                 </form>
-                <p>{spend}</p>
-                <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
+                {receipts.length > 0 ?
+                    <div>
+                        <h1>Celková útrata: {spend} Kč</h1>
+                        <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
 
-                <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-                    <DialogTitle>
-                        Detail
-                    </DialogTitle>
-                    <DialogContent>
-                        <p>{JSON.stringify(selectedReceipt)}</p>
-                    </DialogContent>
-                </Dialog>
+                        <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
+                            <DialogTitle>
+                                Detail
+                            </DialogTitle>
+                            <DialogContent>
+                                <p>{JSON.stringify(selectedReceipt)}</p>
+                            </DialogContent>
+                        </Dialog>
+                    </div> :
+                    <div>
+                        <p>Žádné výsledky.</p>
+                    </div>
+                }
+
             </div>
         </>
     )
