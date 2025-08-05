@@ -26,6 +26,10 @@ export default function SpendInterface() {
         fetchWeeklySpend();
     }, []);
 
+    const goToQueryInterface = () => {
+        router.push('/query');
+    };    
+
     return (
         <>
             <div>
@@ -33,7 +37,10 @@ export default function SpendInterface() {
                     <p>Náklady za tento týden: {weeklySpend} Kč</p>
                     <p>Zbývá tento týden: {remainingSpend} Kč</p>
                     <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
-                    <button className="button" onClick={goToReceiptInterface}>Zadat novou útratu</button>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                        <button className="button min-margin" onClick={goToReceiptInterface}>Zadat novou účtenku</button>
+                        <button className="button min-margin" onClick={goToQueryInterface}>Filtrování účtenek</button>
+                    </div>
                     <RecentReceipts />
                 </div>
             </div>

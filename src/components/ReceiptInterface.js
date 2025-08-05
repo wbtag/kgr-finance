@@ -77,8 +77,9 @@ export default function ReceiptInterface({ tags }) {
 
     return (
         <>
+
+            <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
             <div className="pad">
-                <button className="button" onClick={goHome}>&lt; Zpět na přehled</button>
                 <h1 className="pad-vertical">Nový účet</h1>
                 <div className='flex-row'>
                     <Switcher name='simple' text='Základní' />

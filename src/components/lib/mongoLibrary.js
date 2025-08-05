@@ -31,25 +31,29 @@ export async function getSpend(timeframe, tags) {
         throw new Error('Period or from/to must be specified in the timeframe.');
     };
 
-    if (tags) {
-        findObj['$match']['tags'] = { $in: tags };
+    if (tags && tags.length > 0) {
+        tags = JSON.parse(tags);
+        tags = tags.map(({ value }) => value);
+        findObj['$match']['tags'] = { $all: tags };
     };
 
     const output = await db.collection("receipts").aggregate([
         findObj,
         {
             $group: {
-                spend: { $sum: "$amount" }
+                _id: null,
+                spend: { $sum: "$amount" },
             }
         },
         {
             $project: {
-                spend: 1
+                spend: 1,
+                _id: 0
             }
         }
     ]).toArray();
 
-    return typeof output[0] === 'number' ? output[0] : 0;
+    return output[0]?.spend ?? 0;
 };
 
 export async function getWeeklySpend() {
@@ -119,6 +123,42 @@ export async function getRecentReceipts() {
 
     return receipts
 };
+
+export async function getReceipts(timeframe, tags, offset, limit) {
+    const db = await getDatabase();
+
+    let findObj = {};
+
+    if (timeframe.period) {
+        const timePeriod = timeframe.period;
+        const cutoff = DateTime.now().minus(Duration.fromISO(timePeriod));
+        const cutoffDate = new Date(cutoff.ts).setHours(0, 0, 0, 0);
+        findObj = { date: { $gte: cutoffDate } };
+    } else if (timeframe.from && timeframe.to) {
+        const from = Math.floor(new Date(timeframe.from).setHours(0));
+        const to = Math.floor(new Date(timeframe.to).setHours(24));
+        findObj = { date: { $gte: from, $lt: to } };
+    } else {
+        throw new Error('Period or from/to must be specified in the timeframe.');
+    };
+
+    if (tags && tags.length > 0) {
+        tags = JSON.parse(tags);
+        tags = tags.map(({ value }) => value);
+        findObj['tags'] = { $all: tags };
+    };
+
+    const receipts = await db.collection("receipts").find(findObj).skip(offset ?? 0).limit(limit ?? 10).toArray();
+
+    let output = [];
+
+    for (const receipt of receipts) {
+        const { _id, ...rest } = receipt;
+        output.push(rest);
+    }
+
+    return output
+}
 
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
