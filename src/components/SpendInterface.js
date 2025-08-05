@@ -2,18 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRecentReceipts } from "./lib/mongoLibrary";
+import { getRecentReceipts, getWeeklySpend } from "./lib/mongoLibrary";
 
-export default function SpendInterface({ weeklySpend }) {
+export default function SpendInterface() {
 
     const router = useRouter();
+
+    const [weeklySpend, setWeeklySpend] = useState(0);
+
+    const fetchWeeklySpend = async () => {
+        const spend = await getWeeklySpend();
+        setWeeklySpend(spend);
+    }
 
     const dayOfWeek = new Date().getDay();
     const remainingSpend = 4200 - weeklySpend;
 
     const goToReceiptInterface = () => {
         router.push('/receipt');
-    }
+    };
+
+    useEffect(() => {
+        fetchWeeklySpend();
+    }, []);
 
     return (
         <>
