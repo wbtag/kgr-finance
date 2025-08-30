@@ -65,20 +65,40 @@ export async function getWeeklySpend() {
     startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
     const ts = startOfWeekDate.setHours(0, 0, 0, 0);
 
+    let excludedTags = process.env['ExcludedTags'] || '';
+    excludedTags = excludedTags.split(',');
+
     const db = await getDatabase();
     const output = await db.collection("receipts").aggregate([
-        { $match: { date: { $gte: ts } } },
         {
-            $group: {
-                _id: null,
-                weeklySpend: { $sum: "$amount" }
+            $facet: {
+                withExcluded: [{ $match: { date: { $gte: ts }, tags: { $nin: excludedTags } } },
+                {
+                    $group: {
+                        _id: null,
+                        weeklySpend: { $sum: "$amount" }
+                    }
+                }],
+                withoutExcluded: [
+                    { $match: { date: { $gte: ts } } },
+                    {
+                        $group: {
+                            _id: null,
+                            weeklySpend: { $sum: "$amount" }
+                        }
+                    }
+                ]
             }
         }
     ]).toArray();
 
-    const weeklySpend = output[0]?.weeklySpend || 0;
+    const cleanWeeklySpend = output[0]?.withExcluded?.[0]?.weeklySpend || 0;
+    const fullWeeklySpend = output[0]?.withoutExcluded?.[0]?.weeklySpend || 0;
 
-    return weeklySpend
+    return {
+        cleanWeeklySpend,
+        fullWeeklySpend
+    }
 };
 
 export async function getTags() {
@@ -175,7 +195,8 @@ export async function createNewReceipt(formData) {
                 let cleanedTags = [];
 
                 for (const tag of tagJson) {
-                    cleanedTags.push(tag.value);
+                    const cleanedTag = tag.value.trim();
+                    cleanedTags.push(cleanedTag);
                 };
 
                 const typeSafeAmount = typeof amount === 'number' ? amount : parseInt(amount);
