@@ -2,18 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRecentReceipts } from "./lib/mongoLibrary";
+import { getRecentReceipts, getWeeklySpend } from "./lib/mongoLibrary";
 
-export default function SpendInterface({ weeklySpend }) {
+export default function SpendInterface() {
 
     const router = useRouter();
+
+    const [weeklySpend, setWeeklySpend] = useState(0);
+
+    const fetchWeeklySpend = async () => {
+        const spend = await getWeeklySpend();
+        setWeeklySpend(spend);
+    }
 
     const dayOfWeek = new Date().getDay();
     const remainingSpend = 4200 - weeklySpend;
 
     const goToReceiptInterface = () => {
         router.push('/receipt');
-    }
+    };
+
+    useEffect(() => {
+        fetchWeeklySpend();
+    }, []);
+
+    const goToQueryInterface = () => {
+        router.push('/query');
+    };    
 
     return (
         <>
@@ -22,7 +37,10 @@ export default function SpendInterface({ weeklySpend }) {
                     <p>Náklady za tento týden: {weeklySpend} Kč</p>
                     <p>Zbývá tento týden: {remainingSpend} Kč</p>
                     <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
-                    <button className="button" onClick={goToReceiptInterface}>Zadat novou útratu</button>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                        <button className="button min-margin" onClick={goToReceiptInterface}>Zadat novou účtenku</button>
+                        <button className="button min-margin" onClick={goToQueryInterface}>Filtrování účtenek</button>
+                    </div>
                     <RecentReceipts />
                 </div>
             </div>
