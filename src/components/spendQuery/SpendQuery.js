@@ -13,10 +13,55 @@ export default function SpendQuery() {
     const router = useRouter();
 
     const [queryData, setQueryData] = useState({
-        dateFrom: new Date().toISOString().split('T')[0],
-        dateTo: new Date().toISOString().split('T')[0],
+        from: new Date(new Date().setDate(new Date().getDate() - new Date().getDay())).toISOString().split('T')[0],
+        to: new Date().toISOString().split('T')[0],
         tags: []
     });
+
+    const [timeframe, setTimeframe] = useState('week');
+
+    const changeTimeframe = (e) => {
+
+        setTimeframe(e.target.value);
+
+        let from, to;
+
+        if (e.target.value != 'custom') {
+
+            const date = new Date();
+            from = new Date();
+
+            switch (e.target.value) {
+                case "week":
+                    from.setDate(date.getDate() - date.getDay());
+                    break;
+                case "weekToDate":
+                    from.setDate(date.getDate() - 6);
+                    break;
+                case "month":
+                    from.setDate(1);
+                    break;
+                case "monthToDate":
+                    from.setMonth(date.getMonth() - 1);
+                    break;
+            };
+
+            from = from.toISOString().split('T')[0];
+            to = date.toISOString().split('T')[0];
+
+            query({ from, to });
+
+        } else {
+            from = queryData.from;
+            to = queryData.to;
+        };
+
+        setQueryData({ 
+            from, 
+            to, 
+            tags: queryData.tags 
+        });
+    };
 
     const [spend, setSpend] = useState(0);
     const [receipts, setReceipts] = useState([]);
@@ -44,13 +89,24 @@ export default function SpendQuery() {
             }
         });
         fetchTags();
+        query();
     }, []);
 
-    const query = async (e) => {
-        e.preventDefault();
-        const spend = await getSpend({ from: queryData.dateFrom, to: queryData.dateTo }, queryData.tags);
+    const query = async (input) => {
+
+        let from = queryData.from;
+        let to = queryData.to;
+
+        if (input && input.preventDefault) {
+            input.preventDefault();
+        } else if (input && input.from && input.to) {
+            from = input.from;
+            to = input.to;
+        };
+
+        const spend = await getSpend({ from, to }, queryData.tags);
         setSpend(spend);
-        const receipts = await getReceipts({ from: queryData.dateFrom, to: queryData.dateTo }, queryData.tags, 0, 200);
+        const receipts = await getReceipts({ from, to }, queryData.tags, 0, 200);
         setReceipts(receipts);
     }
 
@@ -69,12 +125,24 @@ export default function SpendQuery() {
     return (
         <>
             <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
-            <div className="pad pad-top">
+            <div className="pad pad-top min-margin">
                 <form className="form" onSubmit={query}>
-                    <label className="min-margin">Datum od</label>
-                    <input type="date" value={queryData.dateFrom} name="dateFrom" onChange={handleInput}></input>
-                    <label className="min-margin">Datum do</label>
-                    <input type="date" value={queryData.dateTo} name="dateTo" onChange={handleInput}></input>
+                    <label>Časový úsek</label>
+                    <select name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
+                        <option value="week">Tento týden</option>
+                        <option value="weekToDate">Posledních 7 dní</option>
+                        <option value="month">Tento měsíc</option>
+                        <option value="monthToDate">Posledních 30 dní</option>
+                        <option value="custom">Vlastní</option>
+                    </select>
+                    {timeframe === 'custom' ?
+                        <div>
+                            <label className="min-margin">Datum od</label>
+                            <input type="date" value={queryData.from} name="from" onChange={handleInput}></input>
+                            <label className="min-margin">Datum do</label>
+                            <input type="date" value={queryData.to} name="to" onChange={handleInput}></input>
+                        </div> : <div />
+                    }
                     <label className="min-margin">Značky</label>
                     <input name="tags" value={queryData.tags} onChange={handleInput}></input>
                     <button className="min-margin" type="submit">OK</button>
