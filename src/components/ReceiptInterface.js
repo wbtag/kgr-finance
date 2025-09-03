@@ -3,13 +3,14 @@ import React, { useEffect, useRef, useState } from "react";
 import Tagify from '@yaireo/tagify';
 import { useRouter } from "next/navigation";
 import { useStateHandler } from "./lib/useStateHandler";
-import { createNewReceipt } from "./lib/mongoLibrary";
+import { createNewReceipt, getTags } from "./lib/mongoLibrary";
 
-export default function ReceiptInterface({ tags }) {
+export default function ReceiptInterface() {
 
     const router = useRouter();
 
     const [receiptType, setReceiptType] = useState('simple');
+    const [tags, setTags] = useState([]);
 
     const handleReceiptTypeChange = (e) => {
         if (e.target.name === 'extended') {
@@ -48,7 +49,13 @@ export default function ReceiptInterface({ tags }) {
         } catch (e) {
             window.alert(e.message);
         }
-    }
+    };
+
+    const fetchTags = async () => {
+        const tags = await getTags();
+        setTags(tags);
+        tagify.current.whitelist = tags;
+    };
 
     const tagify = useRef(null);
 
@@ -65,6 +72,7 @@ export default function ReceiptInterface({ tags }) {
             }
         }
         );
+        fetchTags();
     }, [receiptType]);
 
     const goHome = () => {
