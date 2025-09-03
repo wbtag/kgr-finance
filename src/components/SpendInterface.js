@@ -8,15 +8,17 @@ export default function SpendInterface() {
 
     const router = useRouter();
 
-    const [weeklySpend, setWeeklySpend] = useState(0);
+    const [cleanWeeklySpend, setCleanWeeklySpend] = useState(0);
+    const [fullWeeklySpend, setFullWeeklySpend] = useState(0);
 
     const fetchWeeklySpend = async () => {
         const spend = await getWeeklySpend();
-        setWeeklySpend(spend);
+        setCleanWeeklySpend(spend.cleanWeeklySpend);
+        setFullWeeklySpend(spend.fullWeeklySpend);
     }
 
     const dayOfWeek = new Date().getDay();
-    const remainingSpend = 4200 - weeklySpend;
+    const remainingSpend = 4200 - cleanWeeklySpend;
 
     const goToReceiptInterface = () => {
         router.push('/receipt');
@@ -34,7 +36,7 @@ export default function SpendInterface() {
         <>
             <div>
                 <div className="pad">
-                    <p>Náklady za tento týden: {weeklySpend} Kč</p>
+                    <p>Náklady za tento týden: {cleanWeeklySpend} Kč ({fullWeeklySpend} Kč)</p>
                     <p>Zbývá tento týden: {remainingSpend} Kč</p>
                     <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
