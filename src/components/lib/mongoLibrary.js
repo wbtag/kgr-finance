@@ -165,16 +165,34 @@ export async function getReceipts(timeframe, tags, offset, limit) {
     if (tags && tags.length > 0) {
         tags = JSON.parse(tags);
         tags = tags.map(({ value }) => value);
-        findObj['tags'] = { $all: tags };
+        findObj['allTags'] = { $all: tags };
     };
 
-    const receipts = await db.collection("receipts").find(findObj).skip(offset ?? 0).limit(limit ?? 10).toArray();
+    const receipts = await db.collection("receipts").aggregate([
+        {
+            $addFields: {
+                allTags: {
+                    $setUnion: [
+                        { $ifNull: ["$tags", []] },
+                        { $ifNull: ["$itemTags", []] },
+                    ],
+                },
+            },
+        },
+        {
+            $match: findObj
+        },
+        {
+            $unset: ['allTags']
+        }
+    ]).toArray();
 
     let output = [];
 
     for (const receipt of receipts) {
         const { _id, ...rest } = receipt;
-        output.push(rest);
+        const id = _id.toHexString();
+        output.push({ id, ...rest });
     }
 
     return output
@@ -183,70 +201,62 @@ export async function getReceipts(timeframe, tags, offset, limit) {
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
         const receiptDateTimestamp = new Date(formData.date).setHours(12, 0, 0, 0);
-        if (formData.receiptType === 'simple') {
+        const dateCreated = Date.now();
 
-            const { tags, amount, description } = formData;
-            const tagJson = JSON.parse(tags);
+        const { tags, amount, description } = formData;
+        const tagJson = JSON.parse(tags);
 
-            if (tagJson.length > 0 && amount && description) {
+        if (tagJson.length > 0 && amount && description) {
 
-                const receiptId = crypto.randomUUID();
+            const receiptId = crypto.randomUUID();
 
-                let cleanedTags = [];
+            let cleanedTags = [];
 
-                for (const tag of tagJson) {
-                    const cleanedTag = tag.value.trim();
-                    cleanedTags.push(cleanedTag);
-                };
+            for (const tag of tagJson) {
+                const cleanedTag = tag.value.trim();
+                cleanedTags.push(cleanedTag);
+            };
 
-                const typeSafeAmount = typeof amount === 'number' ? amount : parseInt(amount);
+            const typeSafeAmount = typeof amount === 'number' ? amount : parseInt(amount);
 
-                const body = {
-                    receiptId,
-                    date: receiptDateTimestamp,
-                    tags: cleanedTags,
-                    amount: typeSafeAmount,
-                    description
-                };
+            const body = {
+                receiptId,
+                type: formData.receiptType,
+                date: receiptDateTimestamp,
+                dateCreated,
+                tags: cleanedTags,
+                amount: typeSafeAmount,
+                description
+            };
 
-                const db = await getDatabase();
-                await db.collection("receipts").insertOne(body);
-            } else {
-                throw new Error('Receipt date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
-            }
-        } else if (formData.receiptType === 'extended') {
+            if (formData.receiptType === 'extended') {
 
-            const { description, items, tags } = formData;
+                const { items } = formData;
 
-            if (description && items.length > 0) {
+                if (items.length > 0) {
 
-                const tagJson = typeof tags === 'string' && tags != "" ? JSON.parse(tags) : [];
-                const receiptTags = tagJson.map(({ value }) => value);
-                const receiptId = crypto.randomUUID();
+                    body.items = [];
 
-                for (const item of items) {
+                    for (const item of items) {
 
-                    const tagJson = JSON.parse(item.tags);
-                    const itemTags = tagJson.map(({ value }) => value);
+                        const tagJson = JSON.parse(item.tags);
+                        const itemTags = tagJson.map(({ value }) => value);
 
-                    const mergedTags = itemTags.concat(receiptTags);
+                        const typeSafeAmount = typeof item.amount === 'number' ? item.amount : parseInt(item.amount);
 
-                    const typeSafeAmount = typeof item.amount === 'number' ? item.amount : parseInt(item.amount);
-
-                    const body = {
-                        receiptId,
-                        date: receiptDateTimestamp,
-                        tags: mergedTags,
-                        amount: typeSafeAmount,
-                        description
+                        body.items.push({
+                            amount: typeSafeAmount,
+                            tags: itemTags,
+                        })
                     };
-
-                    const db = await getDatabase();
-                    await db.collection("receipts").insertOne(body);
-                };
-            } else {
-                throw new Error('Receipt date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
+                }
             }
+
+            const db = await getDatabase();
+            await db.collection("receipts").insertOne(body);
+            
+        } else {
+            throw new Error('Receipt date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
         }
     } else {
         throw new Error('Missing form data');
