@@ -14,6 +14,7 @@ async function getDatabase() {
 }
 
 export async function getSpend(timeframe, tags) {
+
     const db = await getDatabase();
 
     let findObj = {};
@@ -22,11 +23,11 @@ export async function getSpend(timeframe, tags) {
         const timePeriod = timeframe.period;
         const cutoff = DateTime.now().minus(Duration.fromISO(timePeriod));
         const cutoffDate = new Date(cutoff.ts).setHours(0, 0, 0, 0);
-        findObj = { $match: { date: { $gte: cutoffDate } } };
+        findObj = { date: { $gte: cutoffDate } };
     } else if (timeframe.from && timeframe.to) {
         const from = Math.floor(new Date(timeframe.from).setHours(0));
         const to = Math.floor(new Date(timeframe.to).setHours(24));
-        findObj = { $match: { date: { $gte: from, $lt: to } } };
+        findObj = { date: { $gte: from, $lt: to } };
     } else {
         throw new Error('Period or from/to must be specified in the timeframe.');
     };
@@ -34,26 +35,35 @@ export async function getSpend(timeframe, tags) {
     if (tags && tags.length > 0) {
         tags = JSON.parse(tags);
         tags = tags.map(({ value }) => value);
-        findObj['$match']['tags'] = { $all: tags };
-    };
+    } else {
+        tags = [];
+    }
 
-    const output = await db.collection("receipts").aggregate([
-        findObj,
-        {
-            $group: {
-                _id: null,
-                spend: { $sum: "$amount" },
+    const output = await db.collection("receipts").find(findObj).toArray();
+
+    const spend = output.reduce((acc, currentItem) => {
+        if (currentItem.type === 'extended') {
+            const { items } = currentItem;
+            const filteredItems = [];
+
+            for (const item of items) {
+                const itemTags = currentItem.tags.concat(item.tags);
+                if (tags.every(tag => itemTags.includes(tag))) {
+                    filteredItems.push(item);
+                }
             }
-        },
-        {
-            $project: {
-                spend: 1,
-                _id: 0
+
+            acc += filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
+        } else {
+            if (tags.every(tag => currentItem.tags.includes(tag))) {
+                acc += currentItem.amount;
             }
         }
-    ]).toArray();
 
-    return output[0]?.spend ?? 0;
+        return acc
+    }, 0)
+
+    return spend;
 };
 
 export async function getWeeklySpend() {
@@ -116,32 +126,19 @@ export async function getTags() {
 export async function getRecentReceipts() {
 
     const db = await getDatabase();
-    const receipts = await db.collection("receipts").aggregate([
-        {
-            $group: {
-                _id: {
-                    date: "$date",
-                    description: "$description",
-                    receiptId: "$receiptId"
-                },
-                amount: { $sum: "$amount" }
-            }
-        },
-        {
-            $project: {
-                date: "$_id.date",
-                description: "$_id.description",
-                receiptId: "$_id.receiptId",
-                amount: 1,
-                _id: 0
-            }
-        },
-        { $sort: { date: -1 } },
-        { $skip: 0 },
-        { $limit: 5 }
-    ]).toArray();
+    const receipts = await db.collection("receipts").find({}).sort({ date: -1 }).skip(0).limit(5).toArray();
 
-    return receipts
+    const output = [];
+
+    for (const receipt of receipts) {
+        const { _id, ...rest } = receipt;
+        output.push({
+            id: _id.toHexString(),
+            ...rest
+        });
+    }
+
+    return output
 };
 
 export async function getReceipts(timeframe, tags, offset, limit) {
@@ -165,35 +162,46 @@ export async function getReceipts(timeframe, tags, offset, limit) {
     if (tags && tags.length > 0) {
         tags = JSON.parse(tags);
         tags = tags.map(({ value }) => value);
-        findObj['allTags'] = { $all: tags };
-    };
-
-    const receipts = await db.collection("receipts").aggregate([
-        {
-            $addFields: {
-                allTags: {
-                    $setUnion: [
-                        { $ifNull: ["$tags", []] },
-                        { $ifNull: ["$itemTags", []] },
-                    ],
-                },
-            },
-        },
-        {
-            $match: findObj
-        },
-        {
-            $unset: ['allTags']
-        }
-    ]).toArray();
-
-    let output = [];
-
-    for (const receipt of receipts) {
-        const { _id, ...rest } = receipt;
-        const id = _id.toHexString();
-        output.push({ id, ...rest });
+    } else {
+        tags = [];
     }
+
+    const receipts = await db.collection("receipts").find(findObj).sort({ date: -1 }).toArray()
+
+    const output = receipts.reduce((acc, currentItem) => {
+        if (currentItem.type === 'extended') {
+            const { _id, items, amount, ...receipt } = currentItem;
+            const filteredItems = [];
+
+            for (const item of items) {
+                const itemTags = currentItem.tags.concat(item.tags);
+                if (tags.every(tag => itemTags.includes(tag))) {
+                    filteredItems.push(item);
+                }
+            }
+
+            const filteredAmount = filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
+
+            if (filteredItems.length > 0) {
+                acc.push({
+                    id: _id.toHexString(),
+                    ...receipt,
+                    items: filteredItems,
+                    amount: filteredAmount
+                })
+            }
+        } else {
+            const { _id, ...receipt } = currentItem;
+            if (tags.every(tag => currentItem.tags.includes(tag))) {
+                acc.push({
+                    id: _id.toHexString(),
+                    ...receipt
+                });
+            }
+        }
+
+        return acc
+    }, []);
 
     return output
 }
@@ -208,8 +216,6 @@ export async function createNewReceipt(formData) {
 
         if (tagJson.length > 0 && amount && description) {
 
-            const receiptId = crypto.randomUUID();
-
             let cleanedTags = [];
 
             for (const tag of tagJson) {
@@ -220,7 +226,6 @@ export async function createNewReceipt(formData) {
             const typeSafeAmount = typeof amount === 'number' ? amount : parseInt(amount);
 
             const body = {
-                receiptId,
                 type: formData.receiptType,
                 date: receiptDateTimestamp,
                 dateCreated,
@@ -254,7 +259,7 @@ export async function createNewReceipt(formData) {
 
             const db = await getDatabase();
             await db.collection("receipts").insertOne(body);
-            
+
         } else {
             throw new Error('Receipt date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
         }
