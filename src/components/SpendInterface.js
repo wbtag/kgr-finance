@@ -68,7 +68,7 @@ function RecentReceipts() {
             <div className="pad-vertical">
                 <p>Nejnovější položky:</p>
                 {receipts.map((receipt) => (
-                    <div key={receipt.receiptId}>
+                    <div key={receipt.id}>
                         <p>{new Date(receipt.date).toISOString().split('T')[0]} - {receipt.description}, {receipt.amount} Kč</p>
                     </div>
                 ))}
