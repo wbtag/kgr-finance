@@ -4,7 +4,7 @@ import { MongoClient } from "mongodb";
 const url = process.env['MongoDbUrl'];
 let client;
 
-async function getDatabase() {
+export async function getDatabase() {
     if (!client) {
         client = new MongoClient(url);
         await client.connect();

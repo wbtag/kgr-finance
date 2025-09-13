@@ -1,4 +1,5 @@
 @import "tw-animate-css";
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -38,8 +39,6 @@ a {
   color: inherit;
   text-decoration: none;
 }
-
-@import "tailwindcss";
 
 .button {
   background: none;
