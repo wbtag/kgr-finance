@@ -5,7 +5,7 @@ export const getColumns = (detail) => [
     accessorKey: "description",
     header: "Popis",
     cell: info => (
-      <div style={{ minWidth: '200px' }}>{info.getValue()}</div>
+      <div>{info.getValue()}</div>
     )
   },
   {
@@ -21,7 +21,7 @@ export const getColumns = (detail) => [
       const receipt = row.original
       return (
         <button style={{paddingLeft: '10px'}} onClick={() => detail(receipt)}>
-          View
+          Detail
         </button>
       )
     },

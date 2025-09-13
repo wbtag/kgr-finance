@@ -1,6 +1,5 @@
 @import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
+@import "tailwindcss";
 
 @media (prefers-color-scheme: dark) {
   html {
@@ -38,8 +37,6 @@ a {
   color: inherit;
   text-decoration: none;
 }
-
-@import "tailwindcss";
 
 .button {
   background: none;
@@ -165,19 +162,19 @@ a {
   }
 
   .large-text {
-    font-size: 6vw;
-  }
-
-  .medium-text {
-    font-size: 5vw;
-  }
-
-  .small-text {
     font-size: 4vw;
   }
 
+  .medium-text {
+    font-size: 3vw;
+  }
+
+  .small-text {
+    font-size: 2vw;
+  }
+
   .x-small-text {
-    font-size: 3vw
+    font-size: 1vw
   }
 
   .pad-vertical {

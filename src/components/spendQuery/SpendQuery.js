@@ -56,10 +56,10 @@ export default function SpendQuery() {
             to = queryData.to;
         };
 
-        setQueryData({ 
-            from, 
-            to, 
-            tags: queryData.tags 
+        setQueryData({
+            from,
+            to,
+            tags: queryData.tags
         });
     };
 
@@ -153,11 +153,10 @@ export default function SpendQuery() {
                         <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
 
                         <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-                            <DialogTitle>
-                                Detail
-                            </DialogTitle>
-                            <DialogContent>
-                                <p>{JSON.stringify(selectedReceipt)}</p>
+                            <DialogContent className="fixed bg-white dark:bg-gray-900 text-black dark:text-white p-6 shadow-lg overflow-auto">
+                                <DialogTitle className="text-xl font-semibold mb-2">Detail</DialogTitle>
+                                <p>Popis: {selectedReceipt?.description}</p>
+                                <p>Částka: {selectedReceipt?.amount}</p>
                             </DialogContent>
                         </Dialog>
                     </div> :
