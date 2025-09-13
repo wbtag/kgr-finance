@@ -23,13 +23,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      <h1>Přihlášení</h1>
-      <form className='' onSubmit={handleLogin}>
-        <input placeholder="username" value={username} onChange={e => setUsername(e.target.value)} />
-        <input type="password" placeholder="password" value={password} onChange={e => setPassword(e.target.value)} />
-        <button type="submit">Login</button>
-      </form>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="w-full max-w-sm p-6 rounded bg-transparent">
+        <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Přihlášení</h1>
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
+          <input className="border px-3 py-2 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="username" value={username} onChange={e => setUsername(e.target.value)} />
+          <input className="border px-3 py-2 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" type="password" placeholder="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <button className="button" type="submit">Přihlásit se</button>
+        </form>
+      </div>
     </div>
+
+
   );
 }

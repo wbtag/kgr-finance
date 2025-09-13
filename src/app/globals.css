@@ -1,8 +1,6 @@
 @import "tw-animate-css";
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
@@ -164,19 +162,19 @@ a {
   }
 
   .large-text {
-    font-size: 6vw;
-  }
-
-  .medium-text {
-    font-size: 5vw;
-  }
-
-  .small-text {
     font-size: 4vw;
   }
 
+  .medium-text {
+    font-size: 3vw;
+  }
+
+  .small-text {
+    font-size: 2vw;
+  }
+
   .x-small-text {
-    font-size: 3vw
+    font-size: 1vw
   }
 
   .pad-vertical {

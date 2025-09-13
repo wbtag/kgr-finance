@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="viewport" content="width=1024" />
       </head>
-      <body>
+      <body style={{backgroundColor: '#09002f'}}>
         {children}
       </body>
     </html>
