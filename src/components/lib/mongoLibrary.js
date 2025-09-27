@@ -111,6 +111,110 @@ export async function getWeeklySpend() {
     }
 };
 
+export async function getWeeklySpendByCategory() {
+    const nowDate = new Date();
+    const dayOfWeek = nowDate.getDay();
+
+    const startOfWeekDate = new Date();
+    startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
+    const ts = startOfWeekDate.setHours(0, 0, 0, 0);
+
+    const findObj = { date: { $gte: ts } };
+
+    let categories = process.env['WeeklySpendCategories'] || '';
+    categories = JSON.parse(categories);
+
+    const categoryNames = Object.keys(categories);
+
+    const spendObject = categoryNames.reduce((acc, curr) => {
+        acc[curr] = {
+            spend: 0,
+            limit: categories[curr]
+        }
+        return acc
+    }, {});
+
+    const db = await getDatabase();
+
+    const receipts = await db.collection("receipts").find(findObj).toArray();
+
+    const output = {
+        totalSpend: 0,
+        other: 0
+    }
+
+    output.categories = receipts.reduce((acc, curr) => {
+        const { amount, category } = curr;
+
+        output.totalSpend += amount;
+
+        if (!category || category === 'Jiné') {
+            output.other += amount;
+        } else {
+            acc[category].spend += amount;
+        }
+
+        return acc
+    }, spendObject);
+
+    return output
+}
+
+export async function getMonthlySpendByCategory() {
+    const nowDate = new Date();
+    const day = nowDate.getDate();
+
+    const fiscalMonthStart = parseInt(process.env['FiscalMonthStart']) || 15;
+
+    let from = new Date();
+    from.setDate(fiscalMonthStart);
+
+    if (day < fiscalMonthStart - 1) {
+        from.setMonth(from.getMonth() - 1);
+    }
+
+    const ts = from.setHours(0, 0, 0, 0);
+    const findObj = { date: { $gte: ts } };
+
+    let categories = process.env['MonthlySpendCategories'] || '';
+    categories = JSON.parse(categories);
+
+    const categoryNames = Object.keys(categories);
+
+    const spendObject = categoryNames.reduce((acc, curr) => {
+        acc[curr] = {
+            spend: 0,
+            limit: categories[curr]
+        }
+        return acc
+    }, {});
+
+    const db = await getDatabase();
+
+    const receipts = await db.collection("receipts").find(findObj).toArray();
+
+    const output = {
+        totalSpend: 0,
+        other: 0
+    }
+
+    output.categories = receipts.reduce((acc, curr) => {
+        const { amount, category } = curr;
+
+        output.totalSpend += amount;
+
+        if (!category || category === 'Jiné') {
+            output.other += amount;
+        } else {
+            acc[category].spend += amount;
+        }
+
+        return acc
+    }, spendObject);
+
+    return output
+}
+
 export async function getTags() {
     const db = await getDatabase();
 
@@ -121,24 +225,6 @@ export async function getTags() {
     ]).toArray();
 
     return output[0].uniqueTags;
-};
-
-export async function getRecentReceipts() {
-
-    const db = await getDatabase();
-    const receipts = await db.collection("receipts").find({}).sort({ date: -1 }).skip(0).limit(5).toArray();
-
-    const output = [];
-
-    for (const receipt of receipts) {
-        const { _id, ...rest } = receipt;
-        output.push({
-            id: _id.toHexString(),
-            ...rest
-        });
-    }
-
-    return output
 };
 
 export async function getReceipts(timeframe, tags, offset, limit) {
@@ -211,10 +297,10 @@ export async function createNewReceipt(formData) {
         const receiptDateTimestamp = new Date(formData.date).setHours(12, 0, 0, 0);
         const dateCreated = Date.now();
 
-        const { tags, amount, description } = formData;
+        const { tags, amount, description, category } = formData;
         const tagJson = JSON.parse(tags);
 
-        if (tagJson.length > 0 && amount && description) {
+        if (category && tagJson.length > 0 && amount && description) {
 
             let cleanedTags = [];
 
@@ -227,6 +313,7 @@ export async function createNewReceipt(formData) {
 
             const body = {
                 type: formData.receiptType,
+                category,
                 date: receiptDateTimestamp,
                 dateCreated,
                 tags: cleanedTags,
@@ -261,7 +348,7 @@ export async function createNewReceipt(formData) {
             await db.collection("receipts").insertOne(body);
 
         } else {
-            throw new Error('Receipt date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
+            throw new Error('Receipt category, date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
         }
     } else {
         throw new Error('Missing form data');
