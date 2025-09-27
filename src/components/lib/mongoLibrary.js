@@ -1,5 +1,6 @@
 'use server'
 import { MongoClient } from "mongodb";
+// import { getWeek } from 'date-fns';
 
 const url = process.env['MongoDbUrl'];
 let client;
@@ -206,9 +207,73 @@ export async function getReceipts(timeframe, tags, offset, limit) {
     return output
 }
 
+export async function getSpendByWeek() {
+
+    const db = await getDatabase();
+
+    const spendByWeek = await db.collection("receipts").aggregate([
+        {
+            $group: {
+                _id: { $ifNull: ["$weekId", "0-2025"] },
+                amount: { $sum: "$amount" },
+                date: { $max: "$date" }
+            }
+        },
+        { $sort: { date: -1 } },
+        {
+            $project: {
+                _id: 1,
+                amount: 1,
+            }
+        },
+        { $skip: 0 },
+        { $limit: 20 }
+    ]).toArray();
+
+    return spendByWeek
+}
+
+export async function getWeeklySpendDetail(weekId) {
+    const db = await getDatabase();
+
+    const receipts = await db.collection("receipts").find({ weekId: { $eq: weekId } }).toArray();
+
+    const groupedReceipts = Object.values(receipts.reduce((acc, item) => {
+        if (!acc[item.receiptId]) {
+            acc[item.receiptId] = {
+                receiptId: item.receiptId,
+                description: item.description,
+                date: item.date,
+                weekId: item.weekId,
+                amount: 0,
+                items: item.type ? item.type === 'extended' ? [] : null : null
+            }
+        }
+
+        acc[item.receiptId].amount += item.amount;
+
+        if (acc[item.receiptId].items) {
+            acc[item.receiptId].items.push(item);
+        };
+
+        return acc
+    }, {})
+    );
+
+    console.log(groupedReceipts);
+
+    return groupedReceipts
+}
+
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
-        const receiptDateTimestamp = new Date(formData.date).setHours(12, 0, 0, 0);
+        const receiptDate = new Date(formData.date);
+        const receiptDateTimestamp = receiptDate.setHours(12, 0, 0, 0);
+
+        const week = getWeek(receiptDate, { weekStartsOn: 0 });
+        const year = receiptDate.getFullYear();
+        const weekYear = `${week}-${year}`;
+
         const dateCreated = Date.now();
 
         const { tags, amount, description } = formData;
@@ -231,6 +296,7 @@ export async function createNewReceipt(formData) {
                 dateCreated,
                 tags: cleanedTags,
                 amount: typeSafeAmount,
+                    weekId: weekYear,
                 description
             };
 
