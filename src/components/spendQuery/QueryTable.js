@@ -83,11 +83,11 @@ export function DataTable({
               ))}
             </tr>
           ))) : (
-          <TableRow>
-            <TableCell colSpan={columns.length}>
+          <tr>
+            <td colSpan={columns.length}>
               No results.
-            </TableCell>
-          </TableRow>
+            </td>
+          </tr>
         )}
       </tbody>
     </table >
