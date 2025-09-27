@@ -9,8 +9,6 @@ export default function SpendInterface() {
 
     const router = useRouter();
 
-    // const [cleanWeeklySpend, setCleanWeeklySpend] = useState(0);
-    // const [fullWeeklySpend, setFullWeeklySpend] = useState(0);
     const [weeklySpend, setWeeklySpend] = useState(0);
     const [weeklyOtherSpend, setWeeklyOtherSpend] = useState(0);
     const [weeklySpendByCategory, setWeeklySpendByCategory] = useState({});
@@ -22,9 +20,6 @@ export default function SpendInterface() {
     const [spendPeriod, setSpendPeriod] = useState('week');
 
     const fetchSpend = async () => {
-        // const spend = await getWeeklySpend();
-        // setCleanWeeklySpend(spend.cleanWeeklySpend);
-        // setFullWeeklySpend(spend.fullWeeklySpend);
         const monthlySpend = await getMonthlySpendByCategory();
         setMonthlySpend(monthlySpend.totalSpend);
         setMonthlySpendByCategory(monthlySpend.categories);
@@ -34,9 +29,6 @@ export default function SpendInterface() {
         setWeeklySpendByCategory(weeklySpend.categories);
         setWeeklyOtherSpend(weeklySpend.other);
     }
-
-    // const dayOfWeek = new Date().getDay();
-    // const remainingSpend = 4200 - cleanWeeklySpend;
 
     const goToReceiptInterface = () => {
         router.push('/receipt');
@@ -60,11 +52,7 @@ export default function SpendInterface() {
         <>
             <div>
                 <div className="pl-10">
-                    {/* <p>Náklady za tento týden: {cleanWeeklySpend} Kč ({fullWeeklySpend} Kč)</p>
-                    <p>Zbývá tento týden: {remainingSpend} Kč</p>
-                    <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p> */}
-                    {/* <RecentReceipts /> */}
-                    <div className='inline-flex py-5'>
+                    <div className='inline-flex py-5 gap-x-1'>
                         <Switcher name='week' text='Tento týden' />
                         <Switcher name='month' text='Tento měsíc' />
                     </div>
@@ -77,38 +65,11 @@ export default function SpendInterface() {
                         </div>
                     }
 
-                    <div className="inline-flex py-2">
-                        <button className="button min-margin" onClick={goToReceiptInterface}>Nová útrata</button>
-                        <button className="button min-margin" onClick={goToQueryInterface}>Přehled útrat</button>
+                    <div className="inline-flex py-2 gap-x-2">
+                        <button className="button px-1" onClick={goToReceiptInterface}>Nová útrata</button>
+                        <button className="button" onClick={goToQueryInterface}>Přehled útrat</button>
                     </div>
                 </div>
-            </div>
-        </>
-    )
-}
-
-function RecentReceipts() {
-
-    const [receipts, setReceipts] = useState([]);
-
-    const getReceipts = async () => {
-        const response = await getRecentReceipts();
-        setReceipts(response);
-    };
-
-    useEffect(() => {
-        getReceipts();
-    }, []);
-
-    return (
-        <>
-            <div className="py-2">
-                <p>Nejnovější položky:</p>
-                {receipts.map((receipt) => (
-                    <div key={receipt.id}>
-                        <p>{new Date(receipt.date).toISOString().split('T')[0]} - {receipt.description}, {receipt.amount} Kč</p>
-                    </div>
-                ))}
             </div>
         </>
     )

@@ -28,17 +28,17 @@ export const getColumns = (detail) => [
       <div style={{ textAlign: 'right', paddingLeft: '10px' }}>{info.getValue()}</div>
     )
   },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const receipt = row.original
-      return (
-        <button style={{ paddingLeft: '10px' }} onClick={() => detail(receipt)}>
-          Detail
-        </button>
-      )
-    },
-  },
+  // {
+  //   id: "actions",
+  //   cell: ({ row }) => {
+  //     const receipt = row.original
+  //     return (
+  //       <button style={{ paddingLeft: '10px' }} onClick={() => detail(receipt)}>
+  //         Detail
+  //       </button>
+  //     )
+  //   },
+  // },
 ]
 
 export function DataTable({

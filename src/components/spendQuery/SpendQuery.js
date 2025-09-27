@@ -126,25 +126,33 @@ export default function SpendQuery() {
             <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
             <div className="pad pad-top min-margin">
                 <form className="form" onSubmit={query}>
-                    <label className="w-2">Časový úsek</label>
-                    <select className="py-0" name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
-                        <option value="week">Tento týden</option>
-                        <option value="weekToDate">Posledních 7 dní</option>
-                        <option value="month">Tento měsíc</option>
-                        <option value="monthToDate">Posledních 30 dní</option>
-                        <option value="custom">Vlastní</option>
-                    </select>
+                    <div className="flex flex-row py-1">
+                        <label className="w-25">Časový úsek</label>
+                        <select className="py-0" name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
+                            <option value="week">Tento týden</option>
+                            <option value="weekToDate">Posledních 7 dní</option>
+                            <option value="month">Tento měsíc</option>
+                            <option value="monthToDate">Posledních 30 dní</option>
+                            <option value="custom">Vlastní</option>
+                        </select>
+                    </div>
                     {timeframe === 'custom' ?
-                        <div>
-                            <label className="min-margin">Datum od</label>
-                            <input type="date" value={queryData.from} name="from" onChange={handleInput}></input>
-                            <label className="min-margin">Datum do</label>
-                            <input type="date" value={queryData.to} name="to" onChange={handleInput}></input>
+                        <div className="flex-wrap py-1">
+                            <div className="flex flex-row flex-nowrap py-1">
+                                <label className="w-25">Datum od</label>
+                                <input type="date" value={queryData.from} name="from" onChange={handleInput}></input>
+                            </div>
+                            <div className="flex flex-row flex-nowrap py-1">
+                                <label className="w-25">Datum do</label>
+                                <input type="date" value={queryData.to} name="to" onChange={handleInput}></input>
+                            </div>
                         </div> : <div />
                     }
-                    <label className="">Značky</label>
-                    <input name="tags" value={queryData.tags} onChange={handleInput}></input>
-                    <button className="min-margin" type="submit">OK</button>
+                    <div className="flex flex-row py-2">
+                        <label className="w-25">Značky</label>
+                        <input name="tags" value={queryData.tags} onChange={handleInput}></input>
+                        <button className="pl-3" type="submit">OK</button>
+                    </div>
                 </form>
                 {receipts.length > 0 ?
                     <div>
@@ -164,7 +172,7 @@ export default function SpendQuery() {
                     </div>
                 }
 
-            </div>
+            </div >
         </>
     )
 }

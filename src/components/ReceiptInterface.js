@@ -97,10 +97,10 @@ export default function ReceiptInterface() {
 
             <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
             <div className="pad">
-                <h1 className="pad-vertical text-2xl">Nový účet</h1>
+                <h1 className="pad-vertical text-2xl">Nová útrata</h1>
                 <div className='inline-flex'>
                     <Switcher name='simple' text='Základní' />
-                    <Switcher name='extended' text='Rozšířený' />
+                    <Switcher name='extended' text='Rozšířená' />
                 </div>
                 <div className="pad-vertical">
                     {receiptType === 'simple' ?

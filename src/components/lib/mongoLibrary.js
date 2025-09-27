@@ -227,24 +227,6 @@ export async function getTags() {
     return output[0].uniqueTags;
 };
 
-export async function getRecentReceipts() {
-
-    const db = await getDatabase();
-    const receipts = await db.collection("receipts").find({}).sort({ date: -1 }).skip(0).limit(5).toArray();
-
-    const output = [];
-
-    for (const receipt of receipts) {
-        const { _id, ...rest } = receipt;
-        output.push({
-            id: _id.toHexString(),
-            ...rest
-        });
-    }
-
-    return output
-};
-
 export async function getReceipts(timeframe, tags, offset, limit) {
     const db = await getDatabase();
 

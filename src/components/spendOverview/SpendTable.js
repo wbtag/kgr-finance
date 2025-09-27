@@ -51,7 +51,7 @@ export default function SpendTable({ source, other, sum }) {
                         {headerGroup.headers.map(header => (
                             <th
                                 key={header.id}
-                                className="px-4 py-2 border-b font-medium min-w-[100px]"
+                                className="px-4 py-2 border-b font-medium min-w-[150px]"
                             >
                                 {header.isPlaceholder
                                     ? null
