@@ -1,5 +1,6 @@
 'use server'
 import { MongoClient } from "mongodb";
+import { getWeek } from "date-fns";
 
 const url = process.env['MongoDbUrl'];
 let client;
@@ -294,7 +295,13 @@ export async function getReceipts(timeframe, tags, offset, limit) {
 
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
-        const receiptDateTimestamp = new Date(formData.date).setHours(12, 0, 0, 0);
+        const receiptDate = new Date(formData.date);
+        const receiptDateTimestamp = receiptDate.setHours(12, 0, 0, 0);
+
+        const week = getWeek(receiptDate, { weekStartsOn: 0 });
+        const year = receiptDate.getFullYear();
+        const weekId = `${week}-${year}`;
+
         const dateCreated = Date.now();
 
         const { tags, amount, description, category } = formData;
@@ -316,6 +323,7 @@ export async function createNewReceipt(formData) {
                 category,
                 date: receiptDateTimestamp,
                 dateCreated,
+                weekId,
                 tags: cleanedTags,
                 amount: typeSafeAmount,
                 description
