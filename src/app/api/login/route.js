@@ -23,7 +23,7 @@ export async function POST(req) {
 
     const token = await new SignJWT({id: user._id}).setProtectedHeader({alg: 'HS256'}).sign(SECRET);
 
-    cookies().set("token", token, { httpOnly: true, path: "/", sameSite: 'strict', secure: process.env.NODE_ENV === 'PROD', });
+    (await cookies()).set("token", token, { httpOnly: true, path: "/", sameSite: 'strict', secure: process.env.NODE_ENV === 'PROD', });
 
     return new Response("Logged in", { status: 200 });
 }

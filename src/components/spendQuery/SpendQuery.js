@@ -3,8 +3,7 @@
 import Tagify from "@yaireo/tagify";
 import { useEffect, useState, useRef } from "react"
 import { getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
-import { getColumns } from './columns';
-import { DataTable } from "./data-table";
+import { DataTable, getColumns } from "./QueryTable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 
@@ -127,8 +126,8 @@ export default function SpendQuery() {
             <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
             <div className="pad pad-top min-margin">
                 <form className="form" onSubmit={query}>
-                    <label>Časový úsek</label>
-                    <select name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
+                    <label className="w-2">Časový úsek</label>
+                    <select className="py-0" name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
                         <option value="week">Tento týden</option>
                         <option value="weekToDate">Posledních 7 dní</option>
                         <option value="month">Tento měsíc</option>
@@ -143,7 +142,7 @@ export default function SpendQuery() {
                             <input type="date" value={queryData.to} name="to" onChange={handleInput}></input>
                         </div> : <div />
                     }
-                    <label className="min-margin">Značky</label>
+                    <label className="">Značky</label>
                     <input name="tags" value={queryData.tags} onChange={handleInput}></input>
                     <button className="min-margin" type="submit">OK</button>
                 </form>
