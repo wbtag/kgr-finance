@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRecentReceipts, getMonthlySpendByCategory, getWeeklySpendByCategory } from "./lib/mongoLibrary";
+import { getMonthlySpendByCategory, getWeeklySpendByCategory } from "./lib/mongoLibrary";
 import SpendTable from "./spendOverview/SpendTable";
 
 export default function SpendInterface() {

@@ -52,44 +52,47 @@ export function DataTable({
   })
 
   return (
-    <table className="table-auto">
-      <thead>
-        {table.getHeaderGroups().map(headerGroup => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map(header => (
-              <th
-                key={header.id}
-                className="px-4 py-2 border-b font-medium min-w-[100px]"
-              >
-                {header.isPlaceholder
-                  ? null
-                  : flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows?.length ? (
-          table.getRowModel().rows.map(row => (
-            <tr key={row.id} className="">
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className="px-4 py-2">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+    <div>
+      <table className="table-auto pb-3">
+        <thead>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th
+                  key={header.id}
+                  className="px-4 py-2 border-b text-sm min-w-[100px]"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                </th>
               ))}
             </tr>
-          ))) : (
-          <tr>
-            <td colSpan={columns.length}>
-              No results.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table >
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map(row => (
+              <tr key={row.id} className="">
+                {row.getVisibleCells().map(cell => (
+                  <td key={cell.id} className="px-4 py-1 text-sm">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))) : (
+            <tr>
+              <td colSpan={columns.length}>
+                No results.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table >
+      <div className="py-5" />
+    </div>
   )
 }
