@@ -53,6 +53,7 @@ export function DataTable({
 
   return (
     <div>
+      <div className="py-5" />
       <table className="table-auto pb-3">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
