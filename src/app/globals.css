@@ -38,8 +38,6 @@ a {
   border-width: 1px;
   border-color: antiquewhite;
   border-radius: 10px;
-  display: block;
-  align-items: center;
   cursor: pointer;
   padding: 2px 20px;
 }

@@ -14,7 +14,7 @@ export async function getDatabase() {
     return db
 }
 
-export async function getSpend(timeframe, tags) {
+export async function getSpend(timeframe, tags, categories) {
 
     const db = await getDatabase();
 
@@ -43,24 +43,25 @@ export async function getSpend(timeframe, tags) {
     const output = await db.collection("receipts").find(findObj).toArray();
 
     const spend = output.reduce((acc, currentItem) => {
-        if (currentItem.type === 'extended') {
-            const { items } = currentItem;
-            const filteredItems = [];
+        if (categories.includes(currentItem.category)) {
+            if (currentItem.type === 'extended') {
+                const { items } = currentItem;
+                const filteredItems = [];
 
-            for (const item of items) {
-                const itemTags = currentItem.tags.concat(item.tags);
-                if (tags.every(tag => itemTags.includes(tag))) {
-                    filteredItems.push(item);
+                for (const item of items) {
+                    const itemTags = currentItem.tags.concat(item.tags);
+                    if (tags.every(tag => itemTags.includes(tag))) {
+                        filteredItems.push(item);
+                    }
+                }
+
+                acc += filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
+            } else {
+                if (tags.every(tag => currentItem.tags.includes(tag))) {
+                    acc += currentItem.amount;
                 }
             }
-
-            acc += filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
-        } else {
-            if (tags.every(tag => currentItem.tags.includes(tag))) {
-                acc += currentItem.amount;
-            }
         }
-
         return acc
     }, 0)
 
@@ -228,7 +229,7 @@ export async function getTags() {
     return output[0].uniqueTags;
 };
 
-export async function getReceipts(timeframe, tags, offset, limit) {
+export async function getReceipts(timeframe, tags, categories, offset, limit) {
     const db = await getDatabase();
 
     let findObj = {};
@@ -256,34 +257,36 @@ export async function getReceipts(timeframe, tags, offset, limit) {
     const receipts = await db.collection("receipts").find(findObj).sort({ date: -1 }).toArray()
 
     const output = receipts.reduce((acc, currentItem) => {
-        if (currentItem.type === 'extended') {
-            const { _id, items, amount, ...receipt } = currentItem;
-            const filteredItems = [];
+        if (categories.includes(currentItem.category)) {
+            if (currentItem.type === 'extended') {
+                const { _id, items, amount, ...receipt } = currentItem;
+                const filteredItems = [];
 
-            for (const item of items) {
-                const itemTags = currentItem.tags.concat(item.tags);
-                if (tags.every(tag => itemTags.includes(tag))) {
-                    filteredItems.push(item);
+                for (const item of items) {
+                    const itemTags = currentItem.tags.concat(item.tags);
+                    if (tags.every(tag => itemTags.includes(tag))) {
+                        filteredItems.push(item);
+                    }
                 }
-            }
 
-            const filteredAmount = filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
+                const filteredAmount = filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
 
-            if (filteredItems.length > 0) {
-                acc.push({
-                    id: _id.toHexString(),
-                    ...receipt,
-                    items: filteredItems,
-                    amount: filteredAmount
-                })
-            }
-        } else {
-            const { _id, ...receipt } = currentItem;
-            if (tags.every(tag => currentItem.tags.includes(tag))) {
-                acc.push({
-                    id: _id.toHexString(),
-                    ...receipt
-                });
+                if (filteredItems.length > 0) {
+                    acc.push({
+                        id: _id.toHexString(),
+                        ...receipt,
+                        items: filteredItems,
+                        amount: filteredAmount
+                    })
+                }
+            } else {
+                const { _id, ...receipt } = currentItem;
+                if (tags.every(tag => currentItem.tags.includes(tag))) {
+                    acc.push({
+                        id: _id.toHexString(),
+                        ...receipt
+                    });
+                }
             }
         }
 

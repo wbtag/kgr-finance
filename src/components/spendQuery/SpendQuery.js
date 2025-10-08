@@ -6,6 +6,7 @@ import { getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
 import { DataTable, getColumns } from "./QueryTable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { getCategories } from "../lib/getCategories";
 
 export default function SpendQuery() {
 
@@ -14,8 +15,11 @@ export default function SpendQuery() {
     const [queryData, setQueryData] = useState({
         from: new Date(new Date().setDate(new Date().getDate() - new Date().getDay())).toISOString().split('T')[0],
         to: new Date().toISOString().split('T')[0],
-        tags: []
+        tags: [],
+        categories: []
     });
+
+    const queried = useRef(false);
 
     const [timeframe, setTimeframe] = useState('week');
 
@@ -48,7 +52,7 @@ export default function SpendQuery() {
             from = from.toISOString().split('T')[0];
             to = date.toISOString().split('T')[0];
 
-            query({ from, to });
+            // query({ from, to });
 
         } else {
             from = queryData.from;
@@ -58,13 +62,15 @@ export default function SpendQuery() {
         setQueryData({
             from,
             to,
-            tags: queryData.tags
+            tags: queryData.tags,
+            categories: queryData.categories
         });
     };
 
     const [spend, setSpend] = useState(0);
     const [receipts, setReceipts] = useState([]);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
+    const [categories, setCategories] = useState([]);
     const [tags, setTags] = useState([]);
 
     const fetchTags = async () => {
@@ -72,6 +78,16 @@ export default function SpendQuery() {
         setTags(tags);
         tagify.current.whitelist = tags;
     };
+
+
+    const fetchCategories = async () => {
+        const categories = await getCategories();
+        setCategories(categories);
+        setQueryData((prevState) => ({
+            ...prevState,
+            categories
+        }));
+    }
 
     const tagify = useRef(null);
 
@@ -88,7 +104,7 @@ export default function SpendQuery() {
             }
         });
         fetchTags();
-        query();
+        fetchCategories();
     }, []);
 
     const query = async (input) => {
@@ -103,9 +119,11 @@ export default function SpendQuery() {
             to = input.to;
         };
 
-        const spend = await getSpend({ from, to }, queryData.tags);
+        queried.current = true;
+
+        const spend = await getSpend({ from, to }, queryData.tags, queryData.categories);
         setSpend(spend);
-        const receipts = await getReceipts({ from, to }, queryData.tags, 0, 200);
+        const receipts = await getReceipts({ from, to }, queryData.tags, queryData.categories, 0, 200);
         setReceipts(receipts);
     }
 
@@ -116,6 +134,13 @@ export default function SpendQuery() {
             [name]: value
         }));
     };
+
+    const handleCategoryInput = (category) => {
+        setQueryData((prevState) => ({
+            ...prevState,
+            categories: queryData.categories.includes(category) ? queryData.categories.filter((cat) => cat != category) : [...queryData.categories, category]
+        }));
+    }
 
     const goHome = () => {
         router.push('/');
@@ -148,30 +173,46 @@ export default function SpendQuery() {
                             </div>
                         </div> : <div />
                     }
+                    <div className="flex flex-row">
+                        <label className="w-25">Kategorie</label>
+                        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                            {categories.map((category) => (
+                                <button type="button" key={category} onClick={() => handleCategoryInput(category)}
+                                    className={`button ${queryData.categories.includes(category) ? "button-group-active" : ""}`}
+                                > {category} </button>
+                            ))}
+                        </div>
+                    </div>
                     <div className="flex flex-row py-2">
                         <label className="w-25">Značky</label>
                         <input name="tags" value={queryData.tags} onChange={handleInput}></input>
-                        <button className="pl-3" type="submit">OK</button>
+                        <div className="text-center w-25">
+                            <button className="inline-block button py-3" style={{ display: 'inline-block' }} type="submit">Spustit</button>
+                        </div>
                     </div>
+
                 </form>
-                {receipts.length > 0 ?
+                {queried.current ?
                     <div>
-                        <h1>Celková útrata: {spend} Kč</h1>
-                        <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
+                        {receipts.length > 0 ?
+                            <div>
+                                <p className="py-2">Celková útrata: {spend} Kč</p>
+                                <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
 
-                        <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-                            <DialogContent className="fixed bg-white dark:bg-gray-900 text-black dark:text-white p-6 shadow-lg overflow-auto">
-                                <DialogTitle className="text-xl font-semibold mb-2">Detail</DialogTitle>
-                                <p>Popis: {selectedReceipt?.description}</p>
-                                <p>Částka: {selectedReceipt?.amount}</p>
-                            </DialogContent>
-                        </Dialog>
-                    </div> :
-                    <div>
-                        <p>Žádné výsledky.</p>
-                    </div>
+                                <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
+                                    <DialogContent className="fixed bg-white dark:bg-gray-900 text-black dark:text-white p-6 shadow-lg overflow-auto">
+                                        <DialogTitle className="text-xl font-semibold mb-2">Detail</DialogTitle>
+                                        <p>Popis: {selectedReceipt?.description}</p>
+                                        <p>Částka: {selectedReceipt?.amount}</p>
+                                    </DialogContent>
+                                </Dialog>
+                            </div> :
+                            <div>
+                                <p>Žádné výsledky.</p>
+                            </div>
+                        }</div> :
+                    <div />
                 }
-
             </div >
         </>
     )
