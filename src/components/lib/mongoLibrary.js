@@ -239,9 +239,10 @@ export async function getWeeklySpendDetail(weekId) {
     const receipts = await db.collection("receipts").find({ weekId: { $eq: weekId } }).toArray();
 
     const groupedReceipts = Object.values(receipts.reduce((acc, item) => {
-        if (!acc[item.receiptId]) {
-            acc[item.receiptId] = {
-                receiptId: item.receiptId,
+        const id = item._id.toHexString();
+        if (!acc[id]) {
+            acc[id] = {
+                id,
                 description: item.description,
                 date: item.date,
                 weekId: item.weekId,
@@ -250,17 +251,15 @@ export async function getWeeklySpendDetail(weekId) {
             }
         }
 
-        acc[item.receiptId].amount += item.amount;
+        acc[id].amount += item.amount;
 
-        if (acc[item.receiptId].items) {
-            acc[item.receiptId].items.push(item);
+        if (acc[id].items) {
+            acc[id].items.push(item);
         };
 
         return acc
     }, {})
     );
-
-    console.log(groupedReceipts);
 
     return groupedReceipts
 }
