@@ -63,24 +63,26 @@ export default function SpendInterface() {
                             <p className="text-center">Útrata tento měsíc</p>
                         </div>
                         <div className="p-8 w-80 border border-solid border-white rounded-lg">
-                            <Link href="/balance"> 
+                            <Link href="/balance">
                                 <p className="text-3xl text-center">{balance} Kč</p>
                                 <p className="text-center">Aktuální odhadovaný zůstatek</p>
                             </Link>
                         </div>
                     </div>
-                    <div className='inline-flex py-5 gap-x-1'>
-                        <Switcher name='week' text='Tento týden' />
-                        <Switcher name='month' text='Tento měsíc' />
+                    <div className='inline-flex py-5 gap-x-1 w-80 justify-center'>
+                        <Switcher name='week' text='Týden' />
+                        <Switcher name='month' text='Měsíc' />
                     </div>
-                    {spendPeriod === 'week' ?
-                        <div>
-                            <SpendTable source={weeklySpendByCategory} other={weeklyOtherSpend} sum={weeklySpend} />
-                        </div> :
-                        <div>
-                            <SpendTable source={monthlySpendByCategory} other={monthlyOtherSpend} sum={monthlySpend} />
-                        </div>
-                    }
+                    <div className="pb-4">
+                        {spendPeriod === 'week' ?
+                            <div>
+                                <SpendTable source={weeklySpendByCategory} other={weeklyOtherSpend} sum={weeklySpend} />
+                            </div> :
+                            <div>
+                                <SpendTable source={monthlySpendByCategory} other={monthlyOtherSpend} sum={monthlySpend} />
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </>

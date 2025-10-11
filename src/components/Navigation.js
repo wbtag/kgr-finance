@@ -2,28 +2,36 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Navigation() {
     const [open, setOpen] = useState(false);
 
     return (
         <>
-            <nav className="hidden md:flex items-center p-4 shadow border-b-1">
-                <h1 className="text-xl font-semibold pl-6 pr-2">Finanční portál rodiny Gregerovy</h1>
-                <ul className="flex gap-10 pl-20">
-                    <li><Link href="/">Přehled</Link></li>
-                    <li><Link href="/receipt">Nová útrata</Link></li>
-                    <li><Link href="/query">Detail útrat</Link></li>
-                    <li><Link href="/balance">Zůstatek</Link></li>
-                </ul>
-            </nav>
+            <DesktopNavigation />
+            <MobileNavigation onClick={() => setOpen(!open)} />
+        </>
+    );
+}
 
+function MobileNavigation({ onClick }) {
+    const path = usePathname();
+
+    if (path === "/login") {
+        return null;
+    }
+
+
+
+    return (
+        <>
             <div className="md:hidden">
-                <button onClick={() => setOpen(!open)} className="p-4">
+                <button onClick={onClick} className="p-4">
                     <Menu size={24} />
                 </button>
                 <aside
-                    className={`absolute left-0 top-0 w-full h-full pl-8 pt-4 pr-2 bg-[#09002f]
+                    className={`absolute z-50 left-0 top-0 w-full h-full pl-8 pt-4 pr-2 bg-[#09002f]
                                 transform transition-transform duration-300
                                  ${open ? "translate-x-0" : "-translate-x-full"}`}
                     onClick={(e) => e.stopPropagation()}
@@ -45,5 +53,28 @@ export default function Navigation() {
                 </aside>
             </div>
         </>
-    );
+    )
+}
+
+function DesktopNavigation() {
+
+    const path = usePathname();
+
+    if (path === "/login") {
+        return null;
+    }
+
+    return (
+        <>
+            <nav className="hidden md:flex items-center p-4 shadow border-b-1">
+                <h1 className="text-xl font-semibold pl-6 pr-2">Finanční portál rodiny Gregerovy</h1>
+                <ul className="flex gap-10 pl-20">
+                    <li><Link href="/">Přehled</Link></li>
+                    <li><Link href="/receipt">Nová útrata</Link></li>
+                    <li><Link href="/query">Detail útrat</Link></li>
+                    <li><Link href="/balance">Zůstatek</Link></li>
+                </ul>
+            </nav>
+        </>
+    )
 }

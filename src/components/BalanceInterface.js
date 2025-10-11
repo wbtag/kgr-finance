@@ -45,7 +45,7 @@ export default function BalanceInterface(params) {
                 <p className="text-center text-xl">{balance} Kč</p>
                 <p className="text-center">Aktuální odhadovaný zůstatek</p>
                 <form className="py-3 max-w-120 pl-3">
-                    <p className="text-xl pb-3">Nový stav</p>
+                    <p className="text-xl pb-3">Změnit celkový zůstatek</p>
                     <div className="flex flex-row">
                         <label className="w-35">Zůstatek v hotovosti</label>
                         <input type="number" name="cashBalance" onChange={handleInput}></input>
