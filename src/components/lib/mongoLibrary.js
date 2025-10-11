@@ -299,7 +299,7 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
         const receiptDate = new Date(formData.date);
-        const receiptDateTimestamp = receiptDate.setHours(12, 0, 0, 0);
+        const receiptDateTimestamp = receiptDate.getTime();
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
         const year = receiptDate.getFullYear();
@@ -364,4 +364,58 @@ export async function createNewReceipt(formData) {
     } else {
         throw new Error('Missing form data');
     };
+}
+
+export async function getCurrentBalance() {
+    const db = await getDatabase();
+
+    const latestBalanceRecord = await db.collection("balances")
+        .find({}, { sort: { createdAt: -1 }, limit: 1 })
+        .toArray();
+
+    if (latestBalanceRecord.length > 0) {
+        const { createdAt, balance } = latestBalanceRecord[0];
+        console.log(createdAt, balance)
+
+        const spend = await getSpend({ from: createdAt, to: Date.now() });
+
+        return balance - spend;
+    } else {
+        return 0
+    }
+
+}
+
+export async function updateBalance(formData, expectedBalance) {
+
+    let { cashBalance, accountBalance } = formData;
+
+    if (formData && cashBalance && accountBalance) {
+
+        if (!expectedBalance) {
+            expectedBalance = 0;
+        };
+
+        cashBalance = typeof cashBalance === 'number' ? cashBalance : parseInt(cashBalance);
+        accountBalance = typeof accountBalance === 'number' ? accountBalance : parseInt(accountBalance);
+
+        const balance = cashBalance + accountBalance;
+
+        const body = {
+            createdAt: Date.now(),
+            balance,
+            balanceBreakdown: {
+                cash: cashBalance,
+                account: accountBalance
+            },
+            offset: balance - expectedBalance
+        };
+
+        const db = await getDatabase();
+        await db.collection("balances").insertOne(body);
+
+        return body.balance;
+    } else {
+        throw new Error('The submitted data was missing or malformed');
+    }
 }

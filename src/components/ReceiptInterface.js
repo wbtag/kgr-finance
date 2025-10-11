@@ -84,18 +84,12 @@ export default function ReceiptInterface() {
         fetchCategories();
     }, [receiptType]);
 
-    const goHome = () => {
-        router.push('/');
-    }
-
     const Switcher = ({ name, text }) => {
         return <button className={`button ${receiptType === name ? 'button-group-active' : ''}`} name={name} onClick={handleReceiptTypeChange}>{text}</button>
     }
 
     return (
         <>
-
-            <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
             <div className="pad">
                 <h1 className="pad-vertical text-2xl">Nová útrata</h1>
                 <div className='inline-flex'>

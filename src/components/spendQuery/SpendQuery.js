@@ -142,14 +142,9 @@ export default function SpendQuery() {
         }));
     }
 
-    const goHome = () => {
-        router.push('/');
-    }
-
     return (
         <>
-            <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
-            <div className="pad pad-top min-margin">
+            <div className="p-8">
                 <form className="form" onSubmit={query}>
                     <div className="flex flex-row py-1">
                         <label className="w-25">Časový úsek</label>

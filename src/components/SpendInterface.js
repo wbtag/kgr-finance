@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMonthlySpendByCategory, getWeeklySpendByCategory } from "./lib/mongoLibrary";
+import { getMonthlySpendByCategory, getWeeklySpendByCategory, getCurrentBalance } from "./lib/mongoLibrary";
 import SpendTable from "./spendOverview/SpendTable";
+import Link from "next/link";
 
 export default function SpendInterface() {
 
@@ -12,10 +13,12 @@ export default function SpendInterface() {
     const [weeklySpend, setWeeklySpend] = useState(0);
     const [weeklyOtherSpend, setWeeklyOtherSpend] = useState(0);
     const [weeklySpendByCategory, setWeeklySpendByCategory] = useState({});
-    
+
     const [monthlySpend, setMonthlySpend] = useState(0);
     const [monthlyOtherSpend, setMonthlyOtherSpend] = useState(0);
     const [monthlySpendByCategory, setMonthlySpendByCategory] = useState({});
+
+    const [balance, setBalance] = useState(0);
 
     const [spendPeriod, setSpendPeriod] = useState('week');
 
@@ -30,17 +33,15 @@ export default function SpendInterface() {
         setWeeklyOtherSpend(weeklySpend.other);
     }
 
-    const goToReceiptInterface = () => {
-        router.push('/receipt');
-    };
+    const fetchBalance = async () => {
+        const balance = await getCurrentBalance();
+        setBalance(balance);
+    }
 
     useEffect(() => {
         fetchSpend();
+        fetchBalance();
     }, []);
-
-    const goToQueryInterface = () => {
-        router.push('/query');
-    };
 
     const handleSpendPeriodChange = (e) => { setSpendPeriod(e.target.name) }
 
@@ -51,7 +52,23 @@ export default function SpendInterface() {
     return (
         <>
             <div>
-                <div className="pl-10">
+                <div className="pl-12">
+                    <div className="flex flex-wrap gap-2 pt-4">
+                        <div className="p-8 w-80 border border-solid border-white rounded-lg">
+                            <p className="text-3xl text-center">{weeklySpend} Kč</p>
+                            <p className="text-center">Útrata tento týden</p>
+                        </div>
+                        <div className="p-8 w-80 text-center border border-solid border-white rounded-lg">
+                            <p className="text-3xl text-center">{monthlySpend} Kč</p>
+                            <p className="text-center">Útrata tento měsíc</p>
+                        </div>
+                        <div className="p-8 w-80 border border-solid border-white rounded-lg">
+                            <Link href="/balance"> 
+                                <p className="text-3xl text-center">{balance} Kč</p>
+                                <p className="text-center">Aktuální odhadovaný zůstatek</p>
+                            </Link>
+                        </div>
+                    </div>
                     <div className='inline-flex py-5 gap-x-1'>
                         <Switcher name='week' text='Tento týden' />
                         <Switcher name='month' text='Tento měsíc' />
@@ -64,11 +81,6 @@ export default function SpendInterface() {
                             <SpendTable source={monthlySpendByCategory} other={monthlyOtherSpend} sum={monthlySpend} />
                         </div>
                     }
-
-                    <div className="inline-flex py-2 gap-x-2">
-                        <button className="button px-1" onClick={goToReceiptInterface}>Nová útrata</button>
-                        <button className="button" onClick={goToQueryInterface}>Přehled útrat</button>
-                    </div>
                 </div>
             </div>
         </>

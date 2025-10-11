@@ -44,7 +44,7 @@ export default function SpendTable({ source, other, sum }) {
     })
 
     return (
-        <table className="table-auto">
+        <table className="w-80">
             <thead>
                 {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id}>
