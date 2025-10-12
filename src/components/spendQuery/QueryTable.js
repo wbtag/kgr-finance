@@ -52,8 +52,8 @@ export function DataTable({
   })
 
   return (
-    <div>
-      <div className="py-5" />
+    <div className="justify-center flex md:justify-start md:ml-12">
+      <div className="mb-5" />
       <table className="table-auto pb-3">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
@@ -93,7 +93,6 @@ export function DataTable({
           )}
         </tbody>
       </table >
-      <div className="py-5" />
     </div>
   )
 }

@@ -29,8 +29,12 @@ export async function getSpend(timeframe, tags, categories) {
         const from = Math.floor(new Date(timeframe.from).setHours(0));
         const to = Math.floor(new Date(timeframe.to).setHours(24));
         findObj = { date: { $gte: from, $lt: to } };
+    } else if (timeframe.timestampFrom) {
+        const from = new Date(timeframe.timestampFrom).getTime();
+        const to = new Date().getTime();
+        findObj = { date: { $gte: from, $lt: to } };
     } else {
-        throw new Error('Period or from/to must be specified in the timeframe.');
+        throw new Error('Period, cutoff point, or from/to must be specified in the timeframe.');
     };
 
     if (tags && tags.length > 0) {
@@ -43,7 +47,7 @@ export async function getSpend(timeframe, tags, categories) {
     const output = await db.collection("receipts").find(findObj).toArray();
 
     const spend = output.reduce((acc, currentItem) => {
-        if (categories.includes(currentItem.category)) {
+        if (categories.length === 0 || categories.includes(currentItem.category)) {
             if (currentItem.type === 'extended') {
                 const { items } = currentItem;
                 const filteredItems = [];
@@ -150,7 +154,7 @@ export async function getWeeklySpendByCategory() {
 
         output.totalSpend += amount;
 
-        if (!category || category === 'Jiné') {
+        if (!category || !categoryNames.includes(category) || category === 'Jiné') {
             output.other += amount;
         } else {
             acc[category].spend += amount;
@@ -257,7 +261,7 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
     const receipts = await db.collection("receipts").find(findObj).sort({ date: -1 }).toArray()
 
     const output = receipts.reduce((acc, currentItem) => {
-        if (categories.includes(currentItem.category)) {
+        if (categories.length === 0 || categories.includes(currentItem.category)) {
             if (currentItem.type === 'extended') {
                 const { _id, items, amount, ...receipt } = currentItem;
                 const filteredItems = [];
@@ -299,7 +303,7 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
         const receiptDate = new Date(formData.date);
-        const receiptDateTimestamp = receiptDate.setHours(12, 0, 0, 0);
+        const receiptDateTimestamp = receiptDate.getTime();
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
         const year = receiptDate.getFullYear();
@@ -364,4 +368,87 @@ export async function createNewReceipt(formData) {
     } else {
         throw new Error('Missing form data');
     };
+}
+
+export async function getBalance(balanceOnly) {
+    const db = await getDatabase();
+
+    const latestBalanceRecord = await db.collection("balances")
+        .find({}, { sort: { createdAt: -1 }, limit: 1 })
+        .toArray();
+
+    if (latestBalanceRecord.length > 0) {
+        const { createdAt, balance } = latestBalanceRecord[0];
+
+        const spend = await getSpend({ timestampFrom: createdAt }, null, []);
+
+        if (balanceOnly) {
+            return balance - spend;
+        } else {
+            return {
+                lastBalance: balance,
+                lastBalanceDate: createdAt,
+                estimatedBalance: balance - spend,
+                spendSinceLastBalance: spend,
+            }
+        }
+    } else {
+        if (balanceOnly) {
+            return 0;
+        } else {
+            return {
+                lastBalance: 0,
+                lastBalanceDate: 0,
+                estimatedBalance: 0,
+                spendSinceLastBalance: 0,
+            }
+        }
+    }
+}
+
+export async function logNewBalance(balance, expectedBalance) {
+
+    balance = typeof balance === 'string' ? parseInt(balance) : balance;
+
+    const body = {
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        balance,
+        offset: balance - expectedBalance
+    };
+
+    const db = await getDatabase();
+    await db.collection("balances").insertOne(body);
+
+    return {
+        lastBalance: body.balance,
+        lastBalanceDate: new Date(),
+        estimatedBalance: body.balance,
+        spendSinceLastBalance: 0,
+    }
+}
+
+export async function logIncome(formData) {
+    const db = await getDatabase();
+
+    let { amount, description, type } = formData;
+    amount = typeof amount === 'string' ? parseInt(amount) : amount;
+
+    const body = {
+        amount,
+        description,
+        type,
+        createdAt: Date.now()
+    }
+
+    await db.collection("balances").updateOne(
+        {},
+        {
+            $set: { updatedAt: Date.now() },
+            $inc: { balance: amount }
+        },
+        { sort: { createdAt: -1 } }
+    );
+
+    await db.collection("income").insertOne(body)
 }

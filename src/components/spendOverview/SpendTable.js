@@ -27,7 +27,7 @@ const columns = [
     },
 ]
 
-export default function SpendTable({ source, other, sum }) {
+export default function SpendTable({ source, other }) {
 
     const data = React.useMemo(() => {
         return Object.entries(source).map(([category, values]) => ({
@@ -44,7 +44,7 @@ export default function SpendTable({ source, other, sum }) {
     })
 
     return (
-        <table className="table-auto">
+        <table className="w-80">
             <thead>
                 {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id}>
@@ -77,10 +77,6 @@ export default function SpendTable({ source, other, sum }) {
                 <tr>
                     <td className="px-4 py-2">Jiné</td>
                     <td className="px-4 py-2 text-right">{other} Kč</td>
-                </tr>
-                <tr className="border-t">
-                    <td className="px-4 py-2">Celkem</td>
-                    <td className="px-4 py-2 text-right">{sum} Kč</td>
                 </tr>
             </tbody>
         </table >

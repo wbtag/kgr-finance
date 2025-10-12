@@ -1,6 +1,7 @@
 import '@yaireo/tagify/dist/tagify.css';
 import "./globals.css";
 import React from "react";
+import Navigation from '@/components/Navigation';
 
 // export const metadata = {
 //   title: "Kongregerace",
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=1024" />
       </head>
       <body style={{backgroundColor: '#09002f'}}>
+        <Navigation />
         {children}
       </body>
     </html>

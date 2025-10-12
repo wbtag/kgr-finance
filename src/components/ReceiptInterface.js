@@ -84,35 +84,34 @@ export default function ReceiptInterface() {
         fetchCategories();
     }, [receiptType]);
 
-    const goHome = () => {
-        router.push('/');
-    }
-
     const Switcher = ({ name, text }) => {
         return <button className={`button ${receiptType === name ? 'button-group-active' : ''}`} name={name} onClick={handleReceiptTypeChange}>{text}</button>
     }
 
     return (
         <>
+            <div className="mt-4">
+                <div className="ml-12 space-y-5">
+                    <h1 className="text-2xl">Nová útrata</h1>
+                    <div className='inline-flex'>
+                        <Switcher name='simple' text='Základní' />
+                        <Switcher name='extended' text='Rozšířená' />
+                    </div>
+                    <div className="">
+                        {receiptType === 'simple' ?
+                            <div>
+                                <SimpleReceipt stateHandler={stateHandler} categories={categories} />
+                            </div> :
+                            <div>
+                                <ExtendedReceipt stateHandler={stateHandler} tags={tags} categories={categories} />
+                            </div>
+                        }
+                    </div>
+                    <div className="w-full flex mt-2 pr-12 justify-center md:justify-start">
+                        <button className="button" onClick={submitForm}>Odeslat</button>
+                    </div>
+                </div>
 
-            <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
-            <div className="pad">
-                <h1 className="pad-vertical text-2xl">Nová útrata</h1>
-                <div className='inline-flex'>
-                    <Switcher name='simple' text='Základní' />
-                    <Switcher name='extended' text='Rozšířená' />
-                </div>
-                <div className="pad-vertical">
-                    {receiptType === 'simple' ?
-                        <div>
-                            <SimpleReceipt stateHandler={stateHandler} categories={categories} />
-                        </div> :
-                        <div>
-                            <ExtendedReceipt stateHandler={stateHandler} tags={tags} categories={categories} />
-                        </div>
-                    }
-                </div>
-                <button className="button" onClick={submitForm}>Odeslat</button>
             </div>
         </>
     )
