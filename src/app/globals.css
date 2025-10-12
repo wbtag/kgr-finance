@@ -171,7 +171,6 @@ a {
 
 * {
   box-sizing: border-box;
-  margin: 0;
 }
 
 .images {
@@ -267,14 +266,16 @@ a {
 .tagify {
   font-size: 0.875rem;
   height: auto;
-  --tag-bg: #ffffff;
-  --tag-hover: #ffb224
+  --tag-bg: none;
+  --tag-text-color: white;
+  --tag-remove-btn-color: white;
+  --tag-hover: #09002f;
+  border-radius: 10px;
+  max-width: 250px;
 }
 
 .tagify__input {
   flex: 1 1 auto;
-  min-width: 100px;
-  width: auto;
 }
 
 .tagify__dropdown {

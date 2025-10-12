@@ -1,18 +1,38 @@
 'use client'
 import { useEffect, useState } from "react";
-import { getCurrentBalance, updateBalance } from "./lib/mongoLibrary";
+import { getBalance, logNewBalance, logIncome } from "./lib/mongoLibrary";
+import animateValue from "./lib/animateValue";
 
 export default function BalanceInterface(params) {
 
-    const [balance, setBalance] = useState(0);
-    const [formData, setFormData] = useState({
-        cashBalance: 0,
-        accountBalance: 0
+    const [balanceData, setBalanceData] = useState({
+        lastBalance: 0,
+        lastBalanceDate: 0,
+        estimatedBalance: 0,
+        spendSinceLastBalance: 0,
+    });
+
+    const lastBalance = animateValue(balanceData.lastBalance);
+    const estimatedBalance = animateValue(balanceData.estimatedBalance);
+    const spendSinceLastBalance = animateValue(balanceData.spendSinceLastBalance);
+
+    const formattedBalanceDate = () => {
+        const lastBalanceDate = balanceData.lastBalanceDate === 0 ? Date.now() : balanceData.lastBalanceDate;
+        const date = new Date(lastBalanceDate).toLocaleString('cs-CZ');
+        return date.substring(0, date.length - 3);
+    }
+
+    const [newBalance, setNewBalance] = useState(0);
+
+    const [incomeFormData, setIncomeFormData] = useState({
+        amount: 0,
+        description: '',
+        type: ''
     });
 
     const fetchBalance = async () => {
-        const balance = await getCurrentBalance();
-        setBalance(balance);
+        const balanceData = await getBalance();
+        setBalanceData(balanceData);
     }
 
     useEffect(() => {
@@ -20,42 +40,88 @@ export default function BalanceInterface(params) {
     }, []);
 
     const handleInput = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevState) => ({
-            ...prevState,
-            [name]: value
-        }));
+        const form = e.target.form?.id;
+
+        if (form === 'balance') {
+            setNewBalance(e.target.value);
+        } else if (form === 'income') {
+            const { name, value } = e.target;
+            setIncomeFormData((prevState) => ({
+                ...prevState,
+                [name]: value
+            }));
+        }
+
     };
 
     const submitForm = async (e) => {
         e.preventDefault();
 
-        try {
-            const newBalance = await updateBalance(formData, balance);
-            setBalance(newBalance);
-            window.alert('Zůstatek aktualizován');
-        } catch (e) {
-            window.alert(e.message);
+        const formId = e.target.form?.id;
+
+        if (formId === 'balance') {
+            const newBalanceData = await logNewBalance(newBalance, balanceData.estimatedBalance);
+            setBalanceData(newBalanceData);
+        } else if (formId === 'income') {
+            await logIncome(incomeFormData);
+            setBalanceData((prevState) => ({
+                ...prevState,
+                lastBalance: parseInt(balanceData.lastBalance) + parseInt(incomeFormData.amount),
+                estimatedBalance: parseInt(balanceData.estimatedBalance) + parseInt(incomeFormData.amount)
+            }))
         }
     };
 
     return (
         <>
-            <div className="pt-50">
-                <p className="text-center text-xl">{balance} Kč</p>
-                <p className="text-center">Aktuální odhadovaný zůstatek</p>
-                <form className="py-3 max-w-120 pl-3">
-                    <p className="text-xl pb-3">Změnit celkový zůstatek</p>
-                    <div className="flex flex-row">
-                        <label className="w-35">Zůstatek v hotovosti</label>
-                        <input type="number" name="cashBalance" onChange={handleInput}></input>
+            <div className="mt-4">
+                <div className="flex flex-wrap gap-2 w-full justify-center">
+                    <div className="w-80 text-center">
+                        <p className="text-3xl">{estimatedBalance.toFixed()} Kč</p>
+                        <p className="">Aktuální odhadovaný zůstatek</p>
                     </div>
-                    <div className="flex flex-row">
-                        <label className="w-35">Zůstatek na účtu</label>
-                        <input type="number" name="accountBalance" onChange={handleInput}></input>
+                    <div className="w-80 text-center">
+                        <p className="text-3xl">{spendSinceLastBalance.toFixed()} Kč</p>
+                        <p className="">Útrata od poslední aktualizace</p>
                     </div>
-                    <button className="button" onClick={submitForm}>Uložit</button>
-                </form>
+                    <div className="w-80 text-center">
+                        <p className="text-3xl">{lastBalance.toFixed()} Kč</p>
+                        <p className="">Zůstatek k {formattedBalanceDate()}</p>
+                    </div>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4 ml-12 w-full md:justify-center">
+                    <form className="my-3 w-100" id="income">
+                        <p className="text-xl pb-3">Nový příjem</p>
+                        <div className="flex flex-row">
+                            <label className="w-20">Typ</label>
+                            <select name="type" value={incomeFormData.type} onChange={handleInput} className="py-0">
+                                <option value=""></option>
+                                <option value="Výplata">Výplata</option>
+                                <option value="Dar">Dar</option>
+                                <option value="Přeplatek">Přeplatek</option>
+                                <option value="Úroky">Úroky</option>
+                                <option value="Jiné">Jiné</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-row">
+                            <label className="w-20">Popis</label>
+                            <input type="text" name="description" value={incomeFormData.description} onChange={handleInput}></input>
+                        </div>
+                        <div className="flex flex-row">
+                            <label className="w-20">Částka</label>
+                            <input type="number" name="amount" value={incomeFormData.amount} onChange={handleInput}></input>
+                        </div>
+                        <button className="button mt-2" onClick={submitForm}>Odeslat</button>
+                    </form>
+                    <form className="my-3 w-80" id="balance">
+                        <p className="text-xl pb-3">Aktualizace zůstatku</p>
+                        <div className="flex flex-row items-center">
+                            <label className="w-25">Nový zůstatek</label>
+                            <input className="w-20" type="number" name="newBalance" value={newBalance} onChange={handleInput}></input>
+                            <button className="button" onClick={submitForm}>Uložit</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </>
     )

@@ -1,14 +1,13 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getMonthlySpendByCategory, getWeeklySpendByCategory, getCurrentBalance } from "./lib/mongoLibrary";
+import { getMonthlySpendByCategory, getWeeklySpendByCategory, getBalance } from "./lib/mongoLibrary";
+import animateValue from "./lib/animateValue";
 import SpendTable from "./spendOverview/SpendTable";
+import Switcher from "./Switcher";
 import Link from "next/link";
 
 export default function SpendInterface() {
-
-    const router = useRouter();
 
     const [weeklySpend, setWeeklySpend] = useState(0);
     const [weeklyOtherSpend, setWeeklyOtherSpend] = useState(0);
@@ -19,6 +18,10 @@ export default function SpendInterface() {
     const [monthlySpendByCategory, setMonthlySpendByCategory] = useState({});
 
     const [balance, setBalance] = useState(0);
+
+    const animatedBalance = animateValue(balance);
+    const animatedWeeklySpend = animateValue(weeklySpend);
+    const animatedMonthlySpend = animateValue(monthlySpend);
 
     const [spendPeriod, setSpendPeriod] = useState('week');
 
@@ -34,7 +37,7 @@ export default function SpendInterface() {
     }
 
     const fetchBalance = async () => {
-        const balance = await getCurrentBalance();
+        const balance = await getBalance(true);
         setBalance(balance);
     }
 
@@ -45,41 +48,37 @@ export default function SpendInterface() {
 
     const handleSpendPeriodChange = (e) => { setSpendPeriod(e.target.name) }
 
-    const Switcher = ({ name, text }) => {
-        return <button className={`button ${spendPeriod === name ? 'button-group-active' : ''}`} name={name} onClick={handleSpendPeriodChange}>{text}</button>
-    }
-
     return (
         <>
             <div>
-                <div className="pl-12">
-                    <div className="flex flex-wrap gap-2 pt-4">
-                        <div className="p-8 w-80 border border-solid border-white rounded-lg">
-                            <p className="text-3xl text-center">{weeklySpend} Kč</p>
-                            <p className="text-center">Útrata tento týden</p>
-                        </div>
-                        <div className="p-8 w-80 text-center border border-solid border-white rounded-lg">
-                            <p className="text-3xl text-center">{monthlySpend} Kč</p>
-                            <p className="text-center">Útrata tento měsíc</p>
-                        </div>
-                        <div className="p-8 w-80 border border-solid border-white rounded-lg">
-                            <Link href="/balance">
-                                <p className="text-3xl text-center">{balance} Kč</p>
-                                <p className="text-center">Aktuální odhadovaný zůstatek</p>
-                            </Link>
-                        </div>
+                <div className="flex flex-wrap md:my-4 justify-center">
+                    <div className="my-2 w-80 text-center">
+                        <p className="text-3xl">{animatedWeeklySpend.toFixed()} Kč</p>
+                        <p>Útrata tento týden</p>
                     </div>
+                    <div className="my-2 w-80 text-center">
+                        <p className="text-3xl">{animatedMonthlySpend.toFixed()} Kč</p>
+                        <p>Útrata tento měsíc</p>
+                    </div>
+                    <div className="my-2 w-80 text-center">
+                        <Link href="/balance">
+                            <p className="text-3xl">{animatedBalance.toFixed()} Kč</p>
+                            <p className="">Aktuální odhadovaný zůstatek</p>
+                        </Link>
+                    </div>
+                </div>
+                <div className="grid justify-center">
                     <div className='inline-flex py-5 gap-x-1 w-80 justify-center'>
-                        <Switcher name='week' text='Týden' />
-                        <Switcher name='month' text='Měsíc' />
+                        <Switcher name='week' text='Týden' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange}/>
+                        <Switcher name='month' text='Měsíc' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange}/>
                     </div>
                     <div className="pb-4">
                         {spendPeriod === 'week' ?
                             <div>
-                                <SpendTable source={weeklySpendByCategory} other={weeklyOtherSpend} sum={weeklySpend} />
+                                <SpendTable source={weeklySpendByCategory} other={weeklyOtherSpend} />
                             </div> :
                             <div>
-                                <SpendTable source={monthlySpendByCategory} other={monthlyOtherSpend} sum={monthlySpend} />
+                                <SpendTable source={monthlySpendByCategory} other={monthlyOtherSpend} />
                             </div>
                         }
                     </div>

@@ -10,19 +10,17 @@ export default function Navigation() {
     return (
         <>
             <DesktopNavigation />
-            <MobileNavigation onClick={() => setOpen(!open)} />
+            <MobileNavigation onClick={() => setOpen(!open)} open={open} setOpen={setOpen} />
         </>
     );
 }
 
-function MobileNavigation({ onClick }) {
+function MobileNavigation({ onClick, open, setOpen }) {
     const path = usePathname();
 
     if (path === "/login") {
         return null;
     }
-
-
 
     return (
         <>

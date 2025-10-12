@@ -19,8 +19,6 @@ export default function SpendQuery() {
         categories: []
     });
 
-    const queried = useRef(false);
-
     const [timeframe, setTimeframe] = useState('week');
 
     const changeTimeframe = (e) => {
@@ -51,9 +49,6 @@ export default function SpendQuery() {
 
             from = from.toISOString().split('T')[0];
             to = date.toISOString().split('T')[0];
-
-            // query({ from, to });
-
         } else {
             from = queryData.from;
             to = queryData.to;
@@ -105,6 +100,7 @@ export default function SpendQuery() {
         });
         fetchTags();
         fetchCategories();
+        query({ from: queryData.from, to: queryData.to });
     }, []);
 
     const query = async (input) => {
@@ -118,8 +114,6 @@ export default function SpendQuery() {
             from = input.from;
             to = input.to;
         };
-
-        queried.current = true;
 
         const spend = await getSpend({ from, to }, queryData.tags, queryData.categories);
         setSpend(spend);
@@ -144,7 +138,7 @@ export default function SpendQuery() {
 
     return (
         <>
-            <div className="p-8">
+            <div className="ml-12 md:mt-4">
                 <form className="form" onSubmit={query}>
                     <div className="flex flex-row py-1">
                         <label className="w-25">Časový úsek</label>
@@ -181,34 +175,30 @@ export default function SpendQuery() {
                     <div className="flex flex-row py-2">
                         <label className="w-25">Značky</label>
                         <input name="tags" value={queryData.tags} onChange={handleInput}></input>
-                        <div className="text-center w-25">
-                            <button className="inline-block button py-3" style={{ display: 'inline-block' }} type="submit">Spustit</button>
-                        </div>
+                    </div>
+                    <div className="w-full flex justify-center md:justify-start">
+                        <button className="button py-3" type="submit">Aktualizovat</button>
                     </div>
 
                 </form>
-                {queried.current ?
-                    <div>
-                        {receipts.length > 0 ?
-                            <div>
-                                <p className="py-2">Celková útrata: {spend} Kč</p>
-                                <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
+            </div>
+            {receipts.length > 0 ?
+                <div>
+                    <p className="mt-4 ml-12 text-lg">Celková útrata: {spend} Kč</p>
+                    <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
 
-                                <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-                                    <DialogContent className="fixed bg-white dark:bg-gray-900 text-black dark:text-white p-6 shadow-lg overflow-auto">
-                                        <DialogTitle className="text-xl font-semibold mb-2">Detail</DialogTitle>
-                                        <p>Popis: {selectedReceipt?.description}</p>
-                                        <p>Částka: {selectedReceipt?.amount}</p>
-                                    </DialogContent>
-                                </Dialog>
-                            </div> :
-                            <div>
-                                <p>Žádné výsledky.</p>
-                            </div>
-                        }</div> :
-                    <div />
-                }
-            </div >
+                    <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
+                        <DialogContent className="fixed bg-white dark:bg-gray-900 text-black dark:text-white p-6 shadow-lg overflow-auto">
+                            <DialogTitle className="text-xl font-semibold mb-2">Detail</DialogTitle>
+                            <p>Popis: {selectedReceipt?.description}</p>
+                            <p>Částka: {selectedReceipt?.amount}</p>
+                        </DialogContent>
+                    </Dialog>
+                </div> :
+                <div>
+                    <p>Žádné výsledky.</p>
+                </div>
+            }
         </>
     )
 }
