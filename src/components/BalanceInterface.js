@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from "react";
 import { getBalance, logNewBalance, logIncome } from "./lib/mongoLibrary";
-import animateValue from "./lib/animateValue";
+import AnimateValue from "./lib/animateValue";
 
 export default function BalanceInterface(params) {
 
@@ -12,9 +12,9 @@ export default function BalanceInterface(params) {
         spendSinceLastBalance: 0,
     });
 
-    const lastBalance = animateValue(balanceData.lastBalance);
-    const estimatedBalance = animateValue(balanceData.estimatedBalance);
-    const spendSinceLastBalance = animateValue(balanceData.spendSinceLastBalance);
+    const lastBalance = AnimateValue(balanceData.lastBalance);
+    const estimatedBalance = AnimateValue(balanceData.estimatedBalance);
+    const spendSinceLastBalance = AnimateValue(balanceData.spendSinceLastBalance);
 
     const formattedBalanceDate = () => {
         const lastBalanceDate = balanceData.lastBalanceDate === 0 ? Date.now() : balanceData.lastBalanceDate;
