@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getMonthlySpendByCategory, getWeeklySpendByCategory, getBalance } from "./lib/mongoLibrary";
-import animateValue from "./lib/animateValue";
+import AnimateValue from "./lib/animateValue";
 import SpendTable from "./spendOverview/SpendTable";
 import Switcher from "./Switcher";
 import Link from "next/link";
@@ -19,9 +19,9 @@ export default function SpendInterface() {
 
     const [balance, setBalance] = useState(0);
 
-    const animatedBalance = animateValue(balance);
-    const animatedWeeklySpend = animateValue(weeklySpend);
-    const animatedMonthlySpend = animateValue(monthlySpend);
+    const animatedBalance = AnimateValue(balance);
+    const animatedWeeklySpend = AnimateValue(weeklySpend);
+    const animatedMonthlySpend = AnimateValue(monthlySpend);
 
     const [spendPeriod, setSpendPeriod] = useState('week');
 

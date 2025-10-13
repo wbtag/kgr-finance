@@ -312,9 +312,9 @@ export async function createNewReceipt(formData) {
         const dateCreated = Date.now();
 
         const { tags, amount, description, category } = formData;
-        const tagJson = JSON.parse(tags);
+        const tagJson = typeof tags === 'string' ? JSON.parse(tags) : tags;
 
-        if (category && tagJson.length > 0 && amount && description) {
+        if (category && amount && description) {
 
             let cleanedTags = [];
 
@@ -346,6 +346,20 @@ export async function createNewReceipt(formData) {
 
                     for (const item of items) {
 
+                        if (typeof item.tags === 'object') {
+                            return {
+                                ok: false,
+                                message: 'Ke každé položce v rozšířené útratě musí být uvedena alespoň jedna značka.'
+                            }
+                        }
+
+                        if (item.amount === 0) {
+                            return {
+                                ok: false,
+                                message: 'Ke každé položce v rozšířené útratě musí být uvedena částka.'
+                            }
+                        }
+
                         const tagJson = JSON.parse(item.tags);
                         const itemTags = tagJson.map(({ value }) => value);
 
@@ -362,11 +376,20 @@ export async function createNewReceipt(formData) {
             const db = await getDatabase();
             await db.collection("receipts").insertOne(body);
 
+            return {
+                ok: true
+            }
         } else {
-            throw new Error('Receipt category, date, amount, and description are mandatory parameters. Additionally, at least one tag must be selected.');
+            return {
+                ok: false,
+                message: 'Kategorie, datum, částka a popis jsou povinné parametry.'
+            }
         }
     } else {
-        throw new Error('Missing form data');
+        return {
+            ok: false,
+            message: 'Server neobdržel data v očekávaném formátu'
+        }
     };
 }
 
