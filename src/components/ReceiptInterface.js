@@ -46,9 +46,13 @@ export default function ReceiptInterface() {
         };
 
         try {
-            await createNewReceipt(receiptBody);
-            stateHandler.clearForm();
-            window.alert('Účtenka úspěšně zaevidována');
+            const response = await createNewReceipt(receiptBody);
+            if (response.ok) {
+                stateHandler.clearForm();
+                window.alert('Účtenka úspěšně zaevidována');
+            } else {
+                window.alert(`Chyba: ${response.message}`);
+            }
         } catch (e) {
             window.alert(e.message);
         }
