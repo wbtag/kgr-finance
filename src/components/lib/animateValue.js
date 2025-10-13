@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from "react";
 
-export default function animateValue(target, duration = 250) {
+export default function AnimateValue(target, duration = 250) {
   const [value, setValue] = useState(target);
 
   useEffect(() => {
