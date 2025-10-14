@@ -72,6 +72,7 @@ export async function getSpend(timeframe, tags, categories) {
     return spend;
 };
 
+// Deprecated
 export async function getWeeklySpend() {
 
     const nowDate = new Date();
@@ -150,14 +151,16 @@ export async function getWeeklySpendByCategory() {
     }
 
     output.categories = receipts.reduce((acc, curr) => {
-        const { amount, category } = curr;
+        const { amount, category, type } = curr;
 
-        output.totalSpend += amount;
+        if (type != 'mandatory') {
+            output.totalSpend += amount;
 
-        if (!category || !categoryNames.includes(category) || category === 'Jiné') {
-            output.other += amount;
-        } else {
-            acc[category].spend += amount;
+            if (!category || !categoryNames.includes(category) || category === 'Jiné') {
+                output.other += amount;
+            } else {
+                acc[category].spend += amount;
+            }
         }
 
         return acc
@@ -205,14 +208,16 @@ export async function getMonthlySpendByCategory() {
     }
 
     output.categories = receipts.reduce((acc, curr) => {
-        const { amount, category } = curr;
+        const { amount, category, type } = curr;
 
-        output.totalSpend += amount;
+        if (type != 'mandatory') {
+            output.totalSpend += amount;
 
-        if (!category || category === 'Jiné') {
-            output.other += amount;
-        } else {
-            acc[category].spend += amount;
+            if (!category || !categoryNames.includes(category) || category === 'Jiné') {
+                output.other += amount;
+            } else {
+                acc[category].spend += amount;
+            }
         }
 
         return acc
