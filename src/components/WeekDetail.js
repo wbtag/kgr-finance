@@ -22,7 +22,7 @@ export default function WeekDetail({ weekId }) {
         <>
             <div className="pad pad-vertical">
                 {receipts.map(receipt => (
-                    <div key={receipt.receiptId}>
+                    <div key={receipt.id}>
                         {receipt.description} - {receipt.amount} Kč
                         {receipt.items && receipt.items.length > 0 ?
                             <div>{receipt.items.map(item => (

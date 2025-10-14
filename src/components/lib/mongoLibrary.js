@@ -214,7 +214,7 @@ export async function getSpendByWeek() {
     const spendByWeek = await db.collection("receipts").aggregate([
         {
             $group: {
-                _id: { $ifNull: ["$weekId", "0-2025"] },
+                _id: { $max: "$weekId" },
                 amount: { $sum: "$amount" },
                 date: { $max: "$date" }
             }
@@ -254,7 +254,11 @@ export async function getWeeklySpendDetail(weekId) {
         acc[id].amount += item.amount;
 
         if (acc[id].items) {
-            acc[id].items.push(item);
+            const { _id, ...params } = item;
+            acc[id].items.push({
+                id: _id.toHexString(),
+                ...params
+            });
         };
 
         return acc
@@ -295,7 +299,7 @@ export async function createNewReceipt(formData) {
                 dateCreated,
                 tags: cleanedTags,
                 amount: typeSafeAmount,
-                    weekId: weekYear,
+                weekId: weekYear,
                 description
             };
 
