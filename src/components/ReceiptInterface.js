@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useStateHandler } from "./lib/useStateHandler";
 import { createNewReceipt, getTags } from "./lib/mongoLibrary";
 import { getCategories } from "./lib/getCategories";
+import Switcher from "./Switcher";
 
 export default function ReceiptInterface() {
 
@@ -22,7 +23,12 @@ export default function ReceiptInterface() {
                     items: [{ amount: 0, tags: [''] }]
                 });
             }
-        };
+        } else if (e.target.name === 'mandatory') {
+            stateHandler.changeFormData({
+                ...stateHandler.formData,
+                category: 'Mandatorní'
+            });
+        }
         setReceiptType(e.target.name);
     };
 
@@ -88,24 +94,22 @@ export default function ReceiptInterface() {
         fetchCategories();
     }, [receiptType]);
 
-    const Switcher = ({ name, text }) => {
-        return <button className={`button ${receiptType === name ? 'button-group-active' : ''}`} name={name} onClick={handleReceiptTypeChange}>{text}</button>
-    }
-
     return (
         <>
             <div className="mt-4">
                 <div className="ml-12 space-y-5">
                     <h1 className="text-2xl">Nová útrata</h1>
-                    <div className='inline-flex'>
-                        <Switcher name='simple' text='Základní' />
-                        <Switcher name='extended' text='Rozšířená' />
+                    <div className='inline-flex gap-1'>
+                        <Switcher name='simple' text='Základní' stateTracker={receiptType} changeHandler={handleReceiptTypeChange} />
+                        <Switcher name='extended' text='Rozšířená' stateTracker={receiptType} changeHandler={handleReceiptTypeChange} />
+                        <Switcher name='mandatory' text='Mandatorní' stateTracker={receiptType} changeHandler={handleReceiptTypeChange} />
                     </div>
                     <div className="">
-                        {receiptType === 'simple' ?
+                        {receiptType != 'extended' ?
                             <div>
-                                <SimpleReceipt stateHandler={stateHandler} categories={categories} />
-                            </div> :
+                                <SimpleReceipt stateHandler={stateHandler} categories={categories} receiptType={receiptType} />
+                            </div>
+                            :
                             <div>
                                 <ExtendedReceipt stateHandler={stateHandler} tags={tags} categories={categories} />
                             </div>
@@ -121,7 +125,7 @@ export default function ReceiptInterface() {
     )
 }
 
-function SimpleReceipt({ stateHandler, categories }) {
+function SimpleReceipt({ stateHandler, categories, receiptType }) {
 
     const {
         handleInput,
@@ -140,7 +144,7 @@ function SimpleReceipt({ stateHandler, categories }) {
                         <label className="w-20">Částka</label>
                         <input className="w-20" type="number" name="amount" value={formData.amount} onChange={handleInput}></input>
                     </div>
-                    <div className="flex flex-row">
+                    {receiptType === 'simple' ? <div className="flex flex-row">
                         <label className="w-20">Kategorie</label>
                         <select className="py-0" name="category" value={formData.category} onChange={handleInput}>
                             <option value=""></option>
@@ -150,7 +154,8 @@ function SimpleReceipt({ stateHandler, categories }) {
                                 </option>
                             ))}
                         </select>
-                    </div>
+                    </div> : <div />}
+
                     <div className="flex flex-row">
                         <label className="w-20">Popis</label>
                         <input className="w-30" type="text" name="description" value={formData.description} onChange={handleInput}></input>
@@ -184,7 +189,7 @@ function ExtendedReceipt({ stateHandler, tags, categories }) {
                     </div>
                     <div className="flex flex-row">
                         <label className="w-20">Částka</label>
-                        <input type="number" name="amount" value={formData.amount} onChange={handleInput}></input>
+                        <input className="w-20" type="number" name="amount" value={formData.amount} onChange={handleInput}></input>
                     </div>
                     <div className="flex flex-row">
                         <label className="w-20">Kategorie</label>

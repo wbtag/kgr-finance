@@ -77,6 +77,7 @@ export default function SpendQuery() {
 
     const fetchCategories = async () => {
         const categories = await getCategories();
+        categories.push('Mandatorní');
         setCategories(categories);
         setQueryData((prevState) => ({
             ...prevState,
