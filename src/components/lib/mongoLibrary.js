@@ -175,7 +175,7 @@ export async function getMonthlySpendByCategory() {
     let from = new Date();
     from.setDate(fiscalMonthStart);
 
-    if (day < fiscalMonthStart - 1) {
+    if (day < fiscalMonthStart) {
         from.setMonth(from.getMonth() - 1);
     }
 
