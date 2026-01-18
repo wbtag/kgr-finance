@@ -10,11 +10,13 @@ export default function BalanceInterface(params) {
         lastBalanceDate: 0,
         estimatedBalance: 0,
         spendSinceLastBalance: 0,
+        incomeSinceLastBalance: 0
     });
 
     const lastBalance = AnimateValue(balanceData.lastBalance);
     const estimatedBalance = AnimateValue(balanceData.estimatedBalance);
     const spendSinceLastBalance = AnimateValue(balanceData.spendSinceLastBalance);
+    const incomeSinceLastBalance = AnimateValue(balanceData.incomeSinceLastBalance)
 
     const formattedBalanceDate = () => {
         const lastBalanceDate = balanceData.lastBalanceDate === 0 ? Date.now() : balanceData.lastBalanceDate;
@@ -79,6 +81,10 @@ export default function BalanceInterface(params) {
                     <div className="w-80 text-center">
                         <p className="text-3xl">{estimatedBalance.toFixed()} Kč</p>
                         <p className="">Aktuální odhadovaný zůstatek</p>
+                    </div>
+                    <div className="w-80 text-center">
+                        <p className="text-3xl">{incomeSinceLastBalance.toFixed()} Kč</p>
+                        <p className="">Příjmy od poslední aktualizace</p>
                     </div>
                     <div className="w-80 text-center">
                         <p className="text-3xl">{spendSinceLastBalance.toFixed()} Kč</p>
