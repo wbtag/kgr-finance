@@ -405,19 +405,21 @@ export async function getBalance(balanceOnly) {
         .find({}, { sort: { createdAt: -1 }, limit: 1 })
         .toArray();
 
-    if (latestBalanceRecord.length > 0) {
+    if (latestBalanceRecord[0]) {
         const { createdAt, balance } = latestBalanceRecord[0];
 
         const spend = await getSpend({ timestampFrom: createdAt }, null, []);
+        const income = await getIncome({ timestampFrom: createdAt });
 
         if (balanceOnly) {
-            return balance - spend;
+            return balance + income - spend;
         } else {
             return {
                 lastBalance: balance,
                 lastBalanceDate: createdAt,
-                estimatedBalance: balance - spend,
+                estimatedBalance: balance + income - spend,
                 spendSinceLastBalance: spend,
+                incomeSinceLastBalance: income
             }
         }
     } else {
@@ -429,6 +431,7 @@ export async function getBalance(balanceOnly) {
                 lastBalanceDate: 0,
                 estimatedBalance: 0,
                 spendSinceLastBalance: 0,
+                incomeSinceLastBalance: 0
             }
         }
     }
@@ -475,8 +478,37 @@ export async function logIncome(formData) {
             $set: { updatedAt: Date.now() },
             $inc: { balance: amount }
         },
-        { sort: { createdAt: -1 } }
+        // { sort: { createdAt: -1 } }
     );
 
     await db.collection("income").insertOne(body)
+}
+
+export async function getIncome(timeframe) {
+    const db = await getDatabase();
+
+    let findObj = {};
+
+    if (timeframe.period) {
+        const timePeriod = timeframe.period;
+        const cutoff = DateTime.now().minus(Duration.fromISO(timePeriod));
+        const cutoffDate = new Date(cutoff.ts).setHours(0, 0, 0, 0);
+        findObj = { createdAt: { $gte: cutoffDate } };
+    } else if (timeframe.from && timeframe.to) {
+        const from = Math.floor(new Date(timeframe.from).setHours(0));
+        const to = Math.floor(new Date(timeframe.to).setHours(24));
+        findObj = { createdAt: { $gte: from, $lt: to } };
+    } else if (timeframe.timestampFrom) {
+        const from = new Date(timeframe.timestampFrom).getTime();
+        const to = new Date().getTime();
+        findObj = { createdAt: { $gte: from, $lt: to } };
+    } else {
+        throw new Error('Period, cutoff point, or from/to must be specified in the timeframe.');
+    };
+
+    const output = await db.collection("income").find(findObj).toArray();
+
+    const income = output.reduce((acc, currentItem) => acc + currentItem.amount, 0)
+
+    return income;
 }
