@@ -37,7 +37,6 @@ export function ReceiptParams({ handler, categories, tags }) {
 
     return (
         <>
-            <Input label="Datum" name="date" value={formData.date} handler={handler} />
             <Select label="Kategorie" name="category" options={categories} handler={handler} />
             <Input label="Popis" name="description" value={formData.description} handler={handler} />
             <Input label="Částka" name="amount" value={formData.amount} handler={handler} />
