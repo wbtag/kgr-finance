@@ -1,44 +1,51 @@
 'use client'
 
+import Image from "next/image";
+
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
-export const getColumns = (detail) => [
+export const getColumns = (openReceiptDetail, handleDeleteReceipt) => [
   {
     accessorKey: "description",
     header: "Popis",
-    cell: info => (
-      <div>{info.getValue()}</div>
+    cell: row => (
+      <div>{row.getValue()}</div>
     )
   },
   {
     accessorKey: "category",
     header: "Kategorie",
-    cell: info => (
-      <div>{info.getValue()}</div>
+    cell: row => (
+      <div>{row.getValue()}</div>
     )
   },
   {
     accessorKey: "amount",
     header: "Částka",
-    cell: info => (
-      <div style={{ textAlign: 'right', paddingLeft: '10px' }}>{info.getValue()}</div>
+    cell: row => (
+      <div style={{ textAlign: 'right', paddingLeft: '10px' }}>{row.getValue()}</div>
     )
   },
-  // {
-  //   id: "actions",
-  //   cell: ({ row }) => {
-  //     const receipt = row.original
-  //     return (
-  //       <button style={{ paddingLeft: '10px' }} onClick={() => detail(receipt)}>
-  //         Detail
-  //       </button>
-  //     )
-  //   },
-  // },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const receipt = row.original
+      return (
+        <div className="mt-1 flex flex-row">
+          <button style={{ paddingLeft: '10px' }} onClick={() => openReceiptDetail(receipt)}>
+            <Image src="/icons/search.svg" alt="Detail" width={12} height={12} />
+          </button>
+          <button style={{ paddingLeft: '10px' }} onClick={() => handleDeleteReceipt(receipt)}>
+            <Image src="/icons/trash.svg" alt="Delete" width={12} height={12} />
+          </button>
+        </div>
+      )
+    },
+  },
 ]
 
 export function DataTable({

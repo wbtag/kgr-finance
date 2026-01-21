@@ -1,5 +1,6 @@
 'use server'
 import { MongoClient } from "mongodb";
+import { ObjectId } from "bson";
 import { getWeek } from "date-fns";
 
 const url = process.env['MongoDbUrl'];
@@ -269,13 +270,17 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
         if (categories.length === 0 || categories.includes(currentItem.category)) {
             if (currentItem.type === 'extended') {
                 const { _id, items, amount, ...receipt } = currentItem;
-                const filteredItems = [];
+                let filteredItems = [];
 
-                for (const item of items) {
-                    const itemTags = currentItem.tags.concat(item.tags);
-                    if (tags.every(tag => itemTags.includes(tag))) {
-                        filteredItems.push(item);
+                if (tags.length > 0) {
+                    for (const item of items) {
+                        const itemTags = currentItem.tags.concat(item.tags);
+                        if (tags.every(tag => itemTags.includes(tag))) {
+                            filteredItems.push(item);
+                        }
                     }
+                } else {
+                    filteredItems = items;
                 }
 
                 const filteredAmount = filteredItems.reduce((acc, curr) => acc += curr.amount, 0);
@@ -396,6 +401,115 @@ export async function createNewReceipt(formData) {
             message: 'Server neobdržel data v očekávaném formátu'
         }
     };
+};
+
+export async function updateReceipt(formData) {
+
+    const { tags, amount, description, category, type } = formData;
+
+    if (category && amount && description) {
+
+        const typeSafeAmount = typeof amount === 'number' ? amount : parseInt(amount);
+
+        const body = {
+            category,
+            tags,
+            amount: typeSafeAmount,
+            description
+        };
+
+        if (type === 'extended') {
+
+            const { items } = formData;
+            let amountSum = 0;
+
+            if (items.length > 0) {
+
+                body.items = [];
+
+                for (const item of items) {
+
+                    if (Array.isArray(item.tags) && item.tags.length === 0) {
+                        return {
+                            ok: false,
+                            message: 'Ke každé položce v rozšířené útratě musí být uvedena alespoň jedna značka.'
+                        }
+                    }
+
+                    if (item.amount === 0) {
+                        return {
+                            ok: false,
+                            message: 'Ke každé položce v rozšířené útratě musí být uvedena částka.'
+                        }
+                    }
+
+                    let itemTags;
+
+                    try {
+                        const tagJson = JSON.parse(item.tags);
+                        itemTags = tagJson.map(({ value }) => value);
+                    } catch (e) {
+                        itemTags = item.tags;
+                    }
+
+                    const typeSafeAmount = typeof item.amount === 'number' ? item.amount : parseInt(item.amount);
+                    amountSum += typeSafeAmount;
+
+                    body.items.push({
+                        amount: typeSafeAmount,
+                        tags: itemTags,
+                    });
+                };
+            }
+
+            if (typeSafeAmount != amountSum) {
+                return {
+                    ok: false,
+                    message: 'Součet hodnot položek se musí rovnat celkové hodnotě účtenky.'
+                }
+            }
+        }
+
+        const db = await getDatabase();
+        await db.collection("receipts").updateOne(
+            { _id: new ObjectId(formData.id) },
+            { $set: body }
+        )
+
+        return {
+            ok: true
+        }
+    } else {
+        return {
+            ok: false,
+            message: 'Kategorie, datum, částka a popis jsou povinné parametry.'
+        }
+    };
+}
+
+export async function deleteReceipt(id) {
+    if (id) {
+        try {
+            const db = await getDatabase();
+            await db.collection("receipts").deleteOne(
+                { _id: new ObjectId(id) }
+            )
+
+            return {
+                ok: true
+            }
+        } catch (e) {
+            return {
+                ok: false,
+                message: `Při mazání účtenky došlo k chybě: ${e.message}`
+            }
+        }
+    } else {
+        return {
+            ok: false,
+            message: 'Při mazání účtenky došlo k chybě: Chybné ID účtenky'
+        }
+    }
 }
 
 export async function getBalance(balanceOnly) {

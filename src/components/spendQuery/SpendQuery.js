@@ -2,15 +2,13 @@
 
 import Tagify from "@yaireo/tagify";
 import { useEffect, useState, useRef } from "react"
-import { getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
+import { deleteReceipt, getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
 import { DataTable, getColumns } from "./QueryTable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
 import { getCategories } from "../lib/getCategories";
+import ReceiptDetail from "./ReceiptDetail";
 
 export default function SpendQuery() {
-
-    const router = useRouter();
 
     const [queryData, setQueryData] = useState({
         from: new Date(new Date().setDate(new Date().getDate() - new Date().getDay())).toISOString().split('T')[0],
@@ -135,6 +133,19 @@ export default function SpendQuery() {
             ...prevState,
             categories: queryData.categories.includes(category) ? queryData.categories.filter((cat) => cat != category) : [...queryData.categories, category]
         }));
+    };
+
+    const handleDeleteReceipt = async (receipt) => {
+        console.log("receipt", receipt);
+        if (window.confirm("Opravdu chcete smazat tuto účtenku?")) {
+            const response = await deleteReceipt(receipt.id);
+            if (response.ok) {
+                window.alert("Smazání účtenky úspěšně dokončeno");
+                window.location.reload();
+            } else {
+                window.alert(response.message);
+            }
+        }
     }
 
     return (
@@ -186,13 +197,18 @@ export default function SpendQuery() {
             {receipts.length > 0 ?
                 <div>
                     <p className="mt-4 ml-12 text-lg">Celková útrata: {spend} Kč</p>
-                    <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
+                    <DataTable columns={getColumns(setSelectedReceipt, handleDeleteReceipt)} data={receipts} />
 
                     <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-                        <DialogContent className="fixed bg-white dark:bg-gray-900 text-black dark:text-white p-6 shadow-lg overflow-auto">
-                            <DialogTitle className="text-xl font-semibold mb-2">Detail</DialogTitle>
-                            <p>Popis: {selectedReceipt?.description}</p>
-                            <p>Částka: {selectedReceipt?.amount}</p>
+                        <DialogContent
+                            className="fixed bg-[#09002f] text-black dark:text-white p-6 shadow-lg overflow-auto">
+                            <DialogTitle className="text-xl">Detail účtenky</DialogTitle>
+                            <ReceiptDetail
+                                receipt={selectedReceipt}
+                                categories={categories}
+                                tags={tags}
+                                handleDeletion={handleDeleteReceipt}
+                            />
                         </DialogContent>
                     </Dialog>
                 </div> :
