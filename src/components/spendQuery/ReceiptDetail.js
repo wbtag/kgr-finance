@@ -42,6 +42,7 @@ export default function ReceiptDetail({ receipt, categories, tags, handleDeletio
     const handleCancelReceiptUpdate = (e) => {
         e.preventDefault();
         changeFormData(initialState);
+        setEditState(!editState);
     };
 
     return (
