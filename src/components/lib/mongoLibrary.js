@@ -579,23 +579,12 @@ export async function logIncome(formData) {
     let { amount, description, type } = formData;
     amount = typeof amount === 'string' ? parseInt(amount) : amount;
 
-    const body = {
+    await db.collection("income").insertOne({
         amount,
         description,
         type,
         createdAt: Date.now()
-    }
-
-    await db.collection("balances").updateOne(
-        {},
-        {
-            $set: { updatedAt: Date.now() },
-            $inc: { balance: amount }
-        },
-        // { sort: { createdAt: -1 } }
-    );
-
-    await db.collection("income").insertOne(body)
+    })
 }
 
 export async function getIncome(timeframe) {
