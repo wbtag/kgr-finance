@@ -68,7 +68,7 @@ export default function BalanceInterface(params) {
             await logIncome(incomeFormData);
             setBalanceData((prevState) => ({
                 ...prevState,
-                lastBalance: parseInt(balanceData.lastBalance) + parseInt(incomeFormData.amount),
+                incomeSinceLastBalance: parseInt(balanceData.incomeSinceLastBalance) + parseInt(incomeFormData.amount),
                 estimatedBalance: parseInt(balanceData.estimatedBalance) + parseInt(incomeFormData.amount)
             }))
         }
