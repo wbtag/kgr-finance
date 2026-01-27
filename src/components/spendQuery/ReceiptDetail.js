@@ -12,11 +12,12 @@ export default function ReceiptDetail({ receipt, categories, tags, handleDeletio
     };
 
     const initialState = {
+        date: receipt?.date,
         amount: receipt?.amount,
         description: receipt?.description,
         category: receipt?.category,
         type: receipt?.type,
-        parentTags: receipt?.tags,
+        tags: receipt?.tags,
         items: receipt?.type === "extended" ? receipt?.items : null
     };
 
@@ -27,8 +28,7 @@ export default function ReceiptDetail({ receipt, categories, tags, handleDeletio
         e.preventDefault();
 
         try {
-            const { parentTags, ...formData } = stateHandler.formData;
-            const response = await updateReceipt({ id: receipt.id, tags: parentTags, ...formData });
+            const response = await updateReceipt({ id: receipt.id, ...stateHandler.formData });
             if (!response.ok) {
                 window.alert(`Chyba: ${response.message}`);
             }
@@ -94,10 +94,11 @@ function StaticReceipt({ formData }) {
     return (
         <>
             <div className="mb-2">
+                <p>Datum: {formData?.date}</p> 
                 <p>Kategorie: {formData?.category}</p>
                 <p>Popis: {formData?.description}</p>
                 <p>Částka: {formData?.amount} Kč</p>
-                <p>Značky: {parseTags(formData.parentTags)}</p>
+                <p>Značky: {parseTags(formData.tags)}</p>
             </div>
             {
                 formData?.type === 'extended' ?

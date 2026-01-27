@@ -1,15 +1,13 @@
 'use client'
 import React, { useEffect, useRef, useState } from "react";
 import Tagify from '@yaireo/tagify';
-import { useRouter } from "next/navigation";
 import { useStateHandler } from "./lib/useStateHandler";
 import { createNewReceipt, getTags } from "./lib/mongoLibrary";
 import { getCategories } from "./lib/getCategories";
 import Switcher from "./Switcher";
+import { ReceiptParams, ReceiptItems } from "./ui/receiptElements";
 
 export default function ReceiptInterface() {
-
-    const router = useRouter();
 
     const [receiptType, setReceiptType] = useState('simple');
     const [tags, setTags] = useState([]);
@@ -42,26 +40,36 @@ export default function ReceiptInterface() {
     }
 
     const stateHandler = useStateHandler(initialState);
+    const { formData } = stateHandler;
 
     const submitForm = async (e) => {
         e.preventDefault();
 
-        const receiptBody = {
-            ...stateHandler.formData,
-            receiptType
-        };
+        if (
+            receiptType != "extended" || 
+            Number(formData.amount) - formData.items.reduce((acc, curr) => acc + Number(curr.amount), 0) === 0
+        ) {
+            const receiptBody = {
+                ...formData,
+                receiptType
+            };
 
-        try {
-            const response = await createNewReceipt(receiptBody);
-            if (response.ok) {
-                stateHandler.clearForm();
-                window.alert('Účtenka úspěšně zaevidována');
-            } else {
-                window.alert(`Chyba: ${response.message}`);
+            try {
+                const response = await createNewReceipt(receiptBody);
+                if (response.ok) {
+                    stateHandler.clearForm();
+                    window.alert('Účtenka úspěšně zaevidována');
+                } else {
+                    window.alert(`Chyba: ${response.message}`);
+                }
+            } catch (e) {
+                window.alert(e.message);
             }
-        } catch (e) {
-            window.alert(e.message);
+        } else {
+            window.alert("Chyba: Součet položek v rozšířené účtence se musí rovnat celkové hodnotě účtenky.")
         }
+
+
     };
 
     const fetchTags = async () => {
@@ -105,14 +113,13 @@ export default function ReceiptInterface() {
                         <Switcher name='mandatory' text='Mandatorní' stateTracker={receiptType} changeHandler={handleReceiptTypeChange} />
                     </div>
                     <div className="">
-                        {receiptType != 'extended' ?
-                            <div>
-                                <SimpleReceipt stateHandler={stateHandler} categories={categories} receiptType={receiptType} />
-                            </div>
-                            :
-                            <div>
-                                <ExtendedReceipt stateHandler={stateHandler} tags={tags} categories={categories} />
-                            </div>
+                        <ReceiptParams handler={stateHandler} tags={tags} categories={categories} type={receiptType} />
+                        {
+                            receiptType === "extended" ?
+                                <div className="mb-2">
+                                    <ReceiptItems handler={stateHandler} tags={tags} />
+                                </div>
+                                : <div />
                         }
                     </div>
                     <div className="w-full flex mt-2 pr-12 justify-center md:justify-start">
@@ -120,171 +127,6 @@ export default function ReceiptInterface() {
                     </div>
                 </div>
 
-            </div>
-        </>
-    )
-}
-
-function SimpleReceipt({ stateHandler, categories, receiptType }) {
-
-    const {
-        handleInput,
-        formData
-    } = stateHandler;
-
-    return (
-        <>
-            <div>
-                <form>
-                    <div className="flex flex-row">
-                        <label className="w-20">Datum</label>
-                        <input type="date" value={formData.date} name="date" onChange={handleInput}></input>
-                    </div>
-                    <div className="flex flex-row">
-                        <label className="w-20">Částka</label>
-                        <input className="w-20" type="number" name="amount" value={formData.amount} onChange={handleInput}></input>
-                    </div>
-                    {receiptType === 'simple' ? <div className="flex flex-row">
-                        <label className="w-20">Kategorie</label>
-                        <select className="py-0" name="category" value={formData.category} onChange={handleInput}>
-                            <option value=""></option>
-                            {categories.map((category) => (
-                                <option key={category} value={category}>
-                                    {category}
-                                </option>
-                            ))}
-                        </select>
-                    </div> : <div />}
-
-                    <div className="flex flex-row">
-                        <label className="w-20">Popis</label>
-                        <input className="w-30" type="text" name="description" value={formData.description} onChange={handleInput}></input>
-                    </div>
-                    <div className="flex flex-row">
-                        <label className="w-20">Značky</label>
-                        <input name="tags" value={formData.tags} onChange={handleInput}></input>
-                    </div>
-                </form>
-            </div>
-        </>
-    )
-}
-
-function ExtendedReceipt({ stateHandler, tags, categories }) {
-
-    const {
-        handleInput,
-        formData,
-    } = stateHandler;
-
-    const receiptTotal = formData.items.reduce((acc, { amount }) => acc + (Number(amount) || 0), 0);
-
-    return (
-        <>
-            <div>
-                <form>
-                    <div className="flex flex-row">
-                        <label className="w-20">Datum</label>
-                        <input type="date" value={formData.date} name="date" onChange={handleInput}></input>
-                    </div>
-                    <div className="flex flex-row">
-                        <label className="w-20">Částka</label>
-                        <input className="w-20" type="number" name="amount" value={formData.amount} onChange={handleInput}></input>
-                    </div>
-                    <div className="flex flex-row">
-                        <label className="w-20">Kategorie</label>
-                        <select className="py-0" name="category" value={formData.category} onChange={handleInput}>
-                            <option value=""></option>
-                            {categories.map((category) => (
-                                <option key={category} value={category}>{category}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="flex flex-row">
-                        <label className="w-20">Popis</label>
-                        <input type="text" name="description" value={formData.description} onChange={handleInput}></input>
-                    </div>
-                    <div className="flex flex-row">
-                        <label className="w-20">Značky</label>
-                        <input name="tags" value={formData.tags} onChange={handleInput}></input>
-                    </div>
-                    <p className="pad-top">Zbývá do celkové částky: {formData.amount - receiptTotal}</p>
-                    <h2 className="py-3 text-lg">Položky</h2>
-                    <ReceiptItems stateHandler={stateHandler} tags={tags} />
-                </form>
-            </div>
-        </>
-    )
-}
-
-function ReceiptItems({ stateHandler, tags }) {
-
-    const {
-        addArrayItem,
-        formData
-    } = stateHandler;
-
-    return (
-        <>
-            <div>
-                {formData.items.map((item, index) => (
-                    <div key={index} className="flex flex-row">
-                        <ReceiptItem stateHandler={stateHandler} index={index} tags={tags} />
-                    </div>
-                ))}
-            </div>
-            <div>
-                {formData.items.length <= 10 ?
-                    <div>
-                        <button className="button" name="items" onClick={(e) => addArrayItem(e)}>Přidat další položku</button>
-                    </div> :
-                    <div />
-                }
-            </div>
-        </>
-    )
-}
-
-function ReceiptItem({ stateHandler, index, tags }) {
-
-    const tagify = useRef(null);
-
-    useEffect(() => {
-        const inputElem = window.document.querySelector(`input[name=tags-${index}]`);
-        tagify.current = new Tagify(inputElem, {
-            whitelist: tags,
-            dropdown: {
-                enabled: 0,
-                maxItems: 5,
-                position: "text",
-                closeOnSelect: false,
-                highlightFirst: true
-            }
-        });
-    }, []);
-
-    const {
-        formData,
-        changeArrayItem,
-        removeArrayItem
-    } = stateHandler;
-
-    return (
-        <>
-            <div className="inline-flex pad-bottom">
-                <div className="flex flex-row pr-2">
-                    <label className="w-15">Částka</label>
-                    <input className="w-15 h-6" name={`amount-${index}`} type="number" value={formData.items[index].amount} onChange={(e) => changeArrayItem(e, index)} />
-                </div>
-                <div className="flex flex-row pr-2">
-                    <label className="w-15">Značky</label>
-                    <input className="max-w-300" name={`tags-${index}`} type="text" value={formData.items[index].tags} onChange={(e) => changeArrayItem(e, index)} />
-                </div>
-                {
-                    index != 0 ?
-                        <button type="button" name="items" className="h-8 pl-2 button" onClick={(e) => removeArrayItem(e, index)}>-</button> :
-                        <div />
-                }
             </div>
         </>
     )

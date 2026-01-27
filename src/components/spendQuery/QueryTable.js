@@ -27,7 +27,7 @@ export const getColumns = (openReceiptDetail, handleDeleteReceipt) => [
     accessorKey: "amount",
     header: "Částka",
     cell: row => (
-      <div style={{ textAlign: 'right', paddingLeft: '10px' }}>{row.getValue()}</div>
+      <div style={{ textAlign: 'right' }}>{row.getValue()}</div>
     )
   },
   {
@@ -36,10 +36,10 @@ export const getColumns = (openReceiptDetail, handleDeleteReceipt) => [
       const receipt = row.original
       return (
         <div className="mt-1 flex flex-row">
-          <button style={{ paddingLeft: '10px' }} onClick={() => openReceiptDetail(receipt)}>
+          <button className="cursor-pointer pl-[10px]" onClick={() => openReceiptDetail(receipt)}>
             <Image src="/icons/search.svg" alt="Detail" width={12} height={12} />
           </button>
-          <button style={{ paddingLeft: '10px' }} onClick={() => handleDeleteReceipt(receipt)}>
+          <button className="cursor-pointer pl-[10px]" onClick={() => handleDeleteReceipt(receipt)}>
             <Image src="/icons/trash.svg" alt="Delete" width={12} height={12} />
           </button>
         </div>
@@ -68,7 +68,7 @@ export function DataTable({
               {headerGroup.headers.map(header => (
                 <th
                   key={header.id}
-                  className="px-4 py-2 border-b text-sm min-w-[100px]"
+                  className="px-4 py-2 border-b text-sm"
                 >
                   {header.isPlaceholder
                     ? null
@@ -86,7 +86,7 @@ export function DataTable({
             table.getRowModel().rows.map(row => (
               <tr key={row.id} className="">
                 {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="px-4 py-1 text-m">
+                  <td key={cell.id} className="px-4 py-1 text-sm">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

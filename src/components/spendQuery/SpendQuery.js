@@ -1,21 +1,27 @@
 'use client'
 
-import Tagify from "@yaireo/tagify";
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react";
+import { useStateHandler } from "../lib/useStateHandler";
 import { deleteReceipt, getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
 import { DataTable, getColumns } from "./QueryTable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getCategories } from "../lib/getCategories";
 import ReceiptDetail from "./ReceiptDetail";
+import { Select, Input } from "../ui/formElements";
+import { TagInput } from "../ui/receiptElements";
+import Image from "next/image";
 
 export default function SpendQuery() {
 
-    const [queryData, setQueryData] = useState({
+    const initialState = {
         from: new Date(new Date().setDate(new Date().getDate() - new Date().getDay())).toISOString().split('T')[0],
         to: new Date().toISOString().split('T')[0],
-        tags: [],
+        queryTags: [],
         categories: []
-    });
+    };
+
+    const stateHandler = useStateHandler(initialState);
+    const { formData, changeFormData } = stateHandler;
 
     const [timeframe, setTimeframe] = useState('week');
 
@@ -48,15 +54,15 @@ export default function SpendQuery() {
             from = from.toISOString().split('T')[0];
             to = date.toISOString().split('T')[0];
         } else {
-            from = queryData.from;
-            to = queryData.to;
+            from = formData.from;
+            to = formData.to;
         };
 
-        setQueryData({
+        changeFormData({
             from,
             to,
-            tags: queryData.tags,
-            categories: queryData.categories
+            queryTags: formData.queryTags,
+            categories: formData.categories
         });
     };
 
@@ -69,7 +75,6 @@ export default function SpendQuery() {
     const fetchTags = async () => {
         const tags = await getTags();
         setTags(tags);
-        tagify.current.whitelist = tags;
     };
 
 
@@ -77,35 +82,22 @@ export default function SpendQuery() {
         const categories = await getCategories();
         categories.push('Mandatorní');
         setCategories(categories);
-        setQueryData((prevState) => ({
+        changeFormData((prevState) => ({
             ...prevState,
             categories
         }));
     }
 
-    const tagify = useRef(null);
-
     useEffect(() => {
-        const inputElem = window.document.querySelector('input[name=tags]');
-        tagify.current = new Tagify(inputElem, {
-            whitelist: tags,
-            dropdown: {
-                enabled: 0,
-                maxItems: 5,
-                position: "text",
-                closeOnSelect: false,
-                highlightFirst: true
-            }
-        });
         fetchTags();
         fetchCategories();
-        query({ from: queryData.from, to: queryData.to });
+        query({ from: formData.from, to: formData.to });
     }, []);
 
     const query = async (input) => {
 
-        let from = queryData.from;
-        let to = queryData.to;
+        let from = formData.from;
+        let to = formData.to;
 
         if (input && input.preventDefault) {
             input.preventDefault();
@@ -114,30 +106,21 @@ export default function SpendQuery() {
             to = input.to;
         };
 
-        const spend = await getSpend({ from, to }, queryData.tags, queryData.categories);
+        const spend = await getSpend({ from, to }, formData.queryTags, formData.categories);
         setSpend(spend);
-        const receipts = await getReceipts({ from, to }, queryData.tags, queryData.categories, 0, 200);
+        const receipts = await getReceipts({ from, to }, formData.queryTags, formData.categories, 0, 200);
         setReceipts(receipts);
-    }
-
-    const handleInput = (e) => {
-        const { name, value } = e.target;
-        setQueryData((prevState) => ({
-            ...prevState,
-            [name]: value
-        }));
     };
 
     const handleCategoryInput = (category) => {
-        setQueryData((prevState) => ({
+        changeFormData((prevState) => ({
             ...prevState,
-            categories: queryData.categories.includes(category) ? queryData.categories.filter((cat) => cat != category) : [...queryData.categories, category]
+            categories: formData.categories.includes(category) ? formData.categories.filter((cat) => cat != category) : [...formData.categories, category]
         }));
     };
 
     const handleDeleteReceipt = async (receipt) => {
-        console.log("receipt", receipt);
-        if (window.confirm("Opravdu chcete smazat tuto účtenku?")) {
+        if (window.confirm("Opravdu smazat tuto účtenku?")) {
             const response = await deleteReceipt(receipt.id);
             if (response.ok) {
                 window.alert("Smazání účtenky úspěšně dokončeno");
@@ -148,48 +131,71 @@ export default function SpendQuery() {
         }
     }
 
+    const timeframeOptions = [
+        { name: "Tento týden", value: "week" },
+        { name: "Posledních 7 dní", value: "weekToDate" },
+        { name: "Tento měsíc", value: "month" },
+        { name: "Posledních 30 dní", value: "monthToDate" },
+        { name: "Vlastní", value: "custom" },
+    ];
+
+    const handleSelectAllCategories = () => {
+        changeFormData((prevState) => ({
+            ...prevState,
+            categories
+        }));
+    };
+
+    const handleUnselectAllCategories = () => {
+        changeFormData((prevState) => ({
+            ...prevState,
+            categories: []
+        }));
+    };
+
     return (
         <>
-            <div className="ml-12 md:mt-4">
+            <div className="md:mt-4">
                 <form className="form" onSubmit={query}>
-                    <div className="flex flex-row py-1">
-                        <label className="w-25">Časový úsek</label>
-                        <select className="py-0" name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
-                            <option value="week">Tento týden</option>
-                            <option value="weekToDate">Posledních 7 dní</option>
-                            <option value="month">Tento měsíc</option>
-                            <option value="monthToDate">Posledních 30 dní</option>
-                            <option value="custom">Vlastní</option>
-                        </select>
-                    </div>
-                    {timeframe === 'custom' ?
-                        <div className="flex-wrap py-1">
-                            <div className="flex flex-row flex-nowrap py-1">
-                                <label className="w-25">Datum od</label>
-                                <input type="date" value={queryData.from} name="from" onChange={handleInput}></input>
+                    <div className="ml-12">
+                        <div className="flex flex-col">
+                            <label className="w-25 mb-1">Kategorie</label>
+                            <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                                {categories.map((category) => (
+                                    <button type="button" key={category} onClick={() => handleCategoryInput(category)}
+                                        className={`button ${formData.categories.includes(category) ? "button-group-active" : ""}`}
+                                    > {category} </button>
+                                ))}
+                                <button className="cursor-pointer" style={{ paddingLeft: '10px' }} onClick={handleSelectAllCategories}>
+                                    <Image src="/icons/select-all.svg" alt="Select all" width={18} height={18} />
+                                </button>
+                                <button className="cursor-pointer" style={{ paddingLeft: '10px' }} onClick={handleUnselectAllCategories}>
+                                    <Image src="/icons/unselect-all.svg" alt="Unselect all" width={18} height={18} />
+                                </button>
                             </div>
-                            <div className="flex flex-row flex-nowrap py-1">
-                                <label className="w-25">Datum do</label>
-                                <input type="date" value={queryData.to} name="to" onChange={handleInput}></input>
-                            </div>
-                        </div> : <div />
-                    }
-                    <div className="flex flex-row">
-                        <label className="w-25">Kategorie</label>
-                        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
-                            {categories.map((category) => (
-                                <button type="button" key={category} onClick={() => handleCategoryInput(category)}
-                                    className={`button ${queryData.categories.includes(category) ? "button-group-active" : ""}`}
-                                > {category} </button>
-                            ))}
+
+                        </div>
+                        <div className="flex flex-row my-2">
+                            <Select
+                                options={timeframeOptions}
+                                handler={stateHandler}
+                                changeHandler={changeTimeframe}
+                                name="timeframe"
+                                label="Časový úsek"
+                            />
+                        </div>
+                        {timeframe === 'custom' ?
+                            <div className="flex-wrap">
+                                <Input label="Datum od" type="date" name="from" value={formData.from} handler={stateHandler} />
+                                <Input label="Datum do" type="date" name="to" value={formData.to} handler={stateHandler} />
+                            </div> : <div />
+                        }
+                        <div className="flex flex-row">
+                            <TagInput handler={stateHandler} tags={tags} name="queryTags" />
                         </div>
                     </div>
-                    <div className="flex flex-row py-2">
-                        <label className="w-25">Značky</label>
-                        <input name="tags" value={queryData.tags} onChange={handleInput}></input>
-                    </div>
-                    <div className="w-full flex justify-center md:justify-start">
-                        <button className="button py-3" type="submit">Aktualizovat</button>
+                    <div className="w-full flex justify-center md:justify-start md:ml-12 mt-4">
+                        <button className="button" type="submit">Aktualizovat</button>
                     </div>
 
                 </form>
@@ -201,7 +207,7 @@ export default function SpendQuery() {
 
                     <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
                         <DialogContent
-                            className="fixed bg-[#09002f] text-black dark:text-white p-6 shadow-lg overflow-auto">
+                            className="fixed bg-[#09002f] text-black dark:text-white p-6 shadow-lg max-h-[85vh] overflow-y-auto md:max-w-[35vw]">
                             <DialogTitle className="text-xl">Detail účtenky</DialogTitle>
                             <ReceiptDetail
                                 receipt={selectedReceipt}
