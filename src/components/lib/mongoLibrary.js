@@ -269,7 +269,7 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
     const output = receipts.reduce((acc, currentItem) => {
         if (categories.length === 0 || categories.includes(currentItem.category)) {
             if (currentItem.type === 'extended') {
-                const { _id, items, amount, ...receipt } = currentItem;
+                const { _id, items, amount, date, ...receipt } = currentItem;
                 let filteredItems = [];
 
                 if (tags.length > 0) {
@@ -288,16 +288,18 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
                 if (filteredItems.length > 0) {
                     acc.push({
                         id: _id.toHexString(),
+                        date: new Date(date).toISOString().split('T')[0],
                         ...receipt,
                         items: filteredItems,
                         amount: filteredAmount
                     })
                 }
             } else {
-                const { _id, ...receipt } = currentItem;
-                if (tags.every(tag => currentItem.tags.includes(tag))) {
+                const { _id, date, ...receipt } = currentItem;
+                if (tags.length === 0 || tags.every(tag => currentItem.tags.includes(tag))) {
                     acc.push({
                         id: _id.toHexString(),
+                        date: new Date(date).toISOString().split('T')[0],
                         ...receipt
                     });
                 }
@@ -312,7 +314,18 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
 
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
-        const receiptDate = new Date(formData.date);
+
+        const currentDate = new Date();
+        let receiptDate = new Date(formData.date);
+
+        if (
+            receiptDate.getDate() === currentDate.getDate() &&
+            receiptDate.getMonth() === currentDate.getMonth() &&
+            receiptDate.getFullYear() === currentDate.getFullYear()
+        ) {
+            receiptDate = currentDate;
+        }
+
         const receiptDateTimestamp = receiptDate.getTime();
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
@@ -329,7 +342,7 @@ export async function createNewReceipt(formData) {
             let cleanedTags = [];
 
             for (const tag of tagJson) {
-                const cleanedTag = tag.value.trim();
+                const cleanedTag = tag.value.trim().toLowerCase();
                 cleanedTags.push(cleanedTag);
             };
 
@@ -405,13 +418,14 @@ export async function createNewReceipt(formData) {
 
 export async function updateReceipt(formData) {
 
-    const { tags, amount, description, category, type } = formData;
+    const { tags, amount, description, category, type, date } = formData;
 
     if (category && amount && description) {
 
         const typeSafeAmount = typeof amount === 'number' ? amount : parseInt(amount);
 
         const body = {
+            date: new Date(date).getTime(),
             category,
             tags,
             amount: typeSafeAmount,
@@ -569,7 +583,7 @@ export async function logNewBalance(balance, expectedBalance) {
         lastBalance: body.balance,
         lastBalanceDate: new Date(),
         estimatedBalance: body.balance,
-        spendSinceLastBalance: 0,
+        spendSinceLastBalance: 0
     }
 }
 
