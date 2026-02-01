@@ -51,7 +51,7 @@ export async function POST(req) {
         httpOnly: true,
         path: "/",
         sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'PROD'
+        secure: process.env.NODE_ENV != 'development'
     });
 
     cookieStore.delete("mfap", { path: "/" });
