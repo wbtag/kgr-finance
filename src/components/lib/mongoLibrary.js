@@ -418,7 +418,8 @@ export async function createNewReceipt(formData) {
 
 export async function updateReceipt(formData) {
 
-    const { tags, amount, description, category, type, date } = formData;
+    const { amount, description, category, type, date } = formData;
+    const tags = formData.tags ? formData.tags : [];
 
     if (category && amount && description) {
 

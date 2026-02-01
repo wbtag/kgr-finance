@@ -81,6 +81,9 @@ function StaticReceipt({ formData }) {
 
     const parseTags = (tags) => {
         if (typeof tags === "string") {
+            if (tags === "") {
+                return ""
+            };
             tags = JSON.parse(tags);
             return tags.reduce((acc, curr) => {
                 acc += (acc != "" ? ", " : "") + curr.value;
@@ -94,7 +97,7 @@ function StaticReceipt({ formData }) {
     return (
         <>
             <div className="mb-2">
-                <p>Datum: {formData?.date}</p> 
+                <p>Datum: {formData?.date}</p>
                 <p>Kategorie: {formData?.category}</p>
                 <p>Popis: {formData?.description}</p>
                 <p>Částka: {formData?.amount} Kč</p>
