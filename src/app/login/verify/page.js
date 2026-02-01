@@ -27,7 +27,7 @@ export default function VerificationPage() {
       <div className="w-full max-w-sm p-6 rounded bg-transparent">
         <h1 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Ověření přihlášení</h1>
         <form onSubmit={handleVerification} className="flex flex-col gap-3">
-          <input className="border px-3 py-2 rounded bg-white dark:bg-gray-800 dark:text-gray-100" placeholder="code" value={code} onChange={e => setCode(e.target.value)} />
+          <input className="border px-3 py-2 rounded bg-white dark:bg-gray-800 dark:text-gray-100" placeholder="Ověřovací kód" value={code} onChange={e => setCode(e.target.value)} />
           <button className="button" type="submit">Odeslat</button>
         </form>
       </div>
