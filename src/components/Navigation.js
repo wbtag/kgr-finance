@@ -18,7 +18,7 @@ export default function Navigation() {
 function MobileNavigation({ onClick, open, setOpen }) {
     const path = usePathname();
 
-    if (path === "/login") {
+    if (path.includes("login")) {
         return null;
     }
 
@@ -58,7 +58,7 @@ function DesktopNavigation() {
 
     const path = usePathname();
 
-    if (path === "/login") {
+    if (path.includes("login")) {
         return null;
     }
 
