@@ -307,7 +307,19 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
 
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
-        const receiptDate = new Date(formData.date);
+
+        const currentDate = new Date();
+
+        let receiptDate = new Date(formData.date);
+
+        // Assign precise date to same-day receipts, minimising interference with balance updates
+        if (
+            currentDate.getDate() === receiptDate.getDate() &&
+            currentDate.getMonth() === receiptDate.getMonth()
+        ) {
+            receiptDate = currentDate;
+        }
+
         const receiptDateTimestamp = receiptDate.getTime();
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
@@ -478,7 +490,6 @@ export async function logIncome(formData) {
             $set: { updatedAt: Date.now() },
             $inc: { balance: amount }
         },
-        // { sort: { createdAt: -1 } }
     );
 
     await db.collection("income").insertOne(body)
