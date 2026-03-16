@@ -40,7 +40,7 @@ export async function getSpend(timeframe, tags, categories) {
 
     if (tags && tags.length > 0) {
         tags = JSON.parse(tags);
-        tags = tags.map(({ value }) => value);
+        tags = tags.map(({ value }) => value.trim().toLowerCase());
     } else {
         tags = [];
     }
@@ -259,7 +259,7 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
 
     if (tags && tags.length > 0) {
         tags = JSON.parse(tags);
-        tags = tags.map(({ value }) => value);
+        tags = tags.map(({ value }) => value.trim().toLowerCase());
     } else {
         tags = [];
     }
@@ -384,7 +384,7 @@ export async function createNewReceipt(formData) {
                         }
 
                         const tagJson = JSON.parse(item.tags);
-                        const itemTags = tagJson.map(({ value }) => value);
+                        const itemTags = tagJson.map(({ value }) => value.trim().toLowerCase());
 
                         const typeSafeAmount = typeof item.amount === 'number' ? item.amount : parseInt(item.amount);
 
@@ -419,7 +419,8 @@ export async function createNewReceipt(formData) {
 export async function updateReceipt(formData) {
 
     const { amount, description, category, type, date } = formData;
-    const tags = formData.tags ? formData.tags : [];
+    let tags = formData.tags ? formData.tags : [];
+    tags = tags.reduce(acc, curr => acc.push(curr.trim().toLowerCase()), []);
 
     if (category && amount && description) {
 
@@ -462,7 +463,7 @@ export async function updateReceipt(formData) {
 
                     try {
                         const tagJson = JSON.parse(item.tags);
-                        itemTags = tagJson.map(({ value }) => value);
+                        itemTags = tagJson.map(({ value }) => value.trim().toLowerCase());
                     } catch (e) {
                         itemTags = item.tags;
                     }
