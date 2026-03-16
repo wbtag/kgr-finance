@@ -1,77 +1,88 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getRecentReceipts, getWeeklySpend } from "./lib/mongoLibrary";
+import { getMonthlySpendByCategory, getWeeklySpendByCategory, getBalance } from "./lib/mongoLibrary";
+import AnimateValue from "./lib/animateValue";
+import SpendTable from "./spendOverview/SpendTable";
+import Switcher from "./Switcher";
+import Link from "next/link";
 
 export default function SpendInterface() {
 
-    const router = useRouter();
+    const [weeklySpend, setWeeklySpend] = useState(0);
+    const [weeklyOtherSpend, setWeeklyOtherSpend] = useState(0);
+    const [weeklySpendByCategory, setWeeklySpendByCategory] = useState({});
 
-    const [cleanWeeklySpend, setCleanWeeklySpend] = useState(0);
-    const [fullWeeklySpend, setFullWeeklySpend] = useState(0);
+    const [monthlySpend, setMonthlySpend] = useState(0);
+    const [monthlyOtherSpend, setMonthlyOtherSpend] = useState(0);
+    const [monthlySpendByCategory, setMonthlySpendByCategory] = useState({});
 
-    const fetchWeeklySpend = async () => {
-        const spend = await getWeeklySpend();
-        setCleanWeeklySpend(spend.cleanWeeklySpend);
-        setFullWeeklySpend(spend.fullWeeklySpend);
+    const [balance, setBalance] = useState(0);
+
+    const animatedBalance = AnimateValue(balance);
+    const animatedWeeklySpend = AnimateValue(weeklySpend);
+    const animatedMonthlySpend = AnimateValue(monthlySpend);
+
+    const [spendPeriod, setSpendPeriod] = useState('week');
+
+    const fetchSpend = async () => {
+        const monthlySpend = await getMonthlySpendByCategory();
+        setMonthlySpend(monthlySpend.totalSpend);
+        setMonthlySpendByCategory(monthlySpend.categories);
+        setMonthlyOtherSpend(monthlySpend.other);
+        const weeklySpend = await getWeeklySpendByCategory();
+        setWeeklySpend(weeklySpend.totalSpend);
+        setWeeklySpendByCategory(weeklySpend.categories);
+        setWeeklyOtherSpend(weeklySpend.other);
     }
 
-    const dayOfWeek = new Date().getDay();
-    const remainingSpend = 4200 - cleanWeeklySpend;
-
-    const goToReceiptInterface = () => {
-        router.push('/receipt');
-    };
+    const fetchBalance = async () => {
+        const balance = await getBalance(true);
+        setBalance(balance);
+    }
 
     useEffect(() => {
-        fetchWeeklySpend();
+        fetchSpend();
+        fetchBalance();
     }, []);
 
-    const goToQueryInterface = () => {
-        router.push('/query');
-    };    
+    const handleSpendPeriodChange = (e) => { setSpendPeriod(e.target.name) }
 
     return (
         <>
             <div>
-                <div className="pad">
-                    <p>Náklady za tento týden: {cleanWeeklySpend} Kč ({fullWeeklySpend} Kč)</p>
-                    <p>Zbývá tento týden: {remainingSpend} Kč</p>
-                    <p>Denní limit: {(remainingSpend / (7 - dayOfWeek)).toFixed(2)} Kč</p>
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
-                        <button className="button min-margin" onClick={goToReceiptInterface}>Zadat novou účtenku</button>
-                        <button className="button min-margin" onClick={goToQueryInterface}>Filtrování účtenek</button>
+                <div className="flex flex-wrap md:my-4 justify-center">
+                    <div className="my-2 w-80 text-center">
+                        <p className="text-3xl">{animatedWeeklySpend.toFixed()} Kč</p>
+                        <p>Útrata tento týden</p>
                     </div>
-                    <RecentReceipts />
+                    <div className="my-2 w-80 text-center">
+                        <p className="text-3xl">{animatedMonthlySpend.toFixed()} Kč</p>
+                        <p>Útrata tento měsíc</p>
+                    </div>
+                    <div className="my-2 w-80 text-center">
+                        <Link href="/balance">
+                            <p className="text-3xl">{animatedBalance.toFixed()} Kč</p>
+                            <p className="">Aktuální odhadovaný zůstatek</p>
+                        </Link>
+                    </div>
                 </div>
-            </div>
-        </>
-    )
-}
-
-function RecentReceipts() {
-
-    const [receipts, setReceipts] = useState([]);
-
-    const getReceipts = async () => {
-        const response = await getRecentReceipts();
-        setReceipts(response);
-    };
-
-    useEffect(() => {
-        getReceipts();
-    }, []);
-
-    return (
-        <>
-            <div className="pad-vertical">
-                <p>Nejnovější položky:</p>
-                {receipts.map((receipt) => (
-                    <div key={receipt.id}>
-                        <p>{new Date(receipt.date).toISOString().split('T')[0]} - {receipt.description}, {receipt.amount} Kč</p>
+                <div className="grid justify-center">
+                    <div className='inline-flex py-5 gap-x-1 w-80 justify-center'>
+                        <Switcher name='week' text='Týden' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange}/>
+                        <Switcher name='month' text='Měsíc' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange}/>
                     </div>
-                ))}
+                    <div className="pb-4">
+                        {spendPeriod === 'week' ?
+                            <div>
+                                <SpendTable source={weeklySpendByCategory} other={weeklyOtherSpend} />
+                            </div> :
+                            <div>
+                                <SpendTable source={monthlySpendByCategory} other={monthlyOtherSpend} />
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         </>
     )

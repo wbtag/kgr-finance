@@ -27,7 +27,7 @@ export const useStateHandler = (initialState) => {
         const { name } = e.target;
         setFormData((prevState) => ({
             ...prevState,
-            [name]: [...prevState[name], {amount: 0, tags: ['']}],
+            [name]: [...prevState[name], { amount: 0, tags: [''] }],
         }));
     };
 

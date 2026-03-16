@@ -1,22 +1,27 @@
 'use client'
 
-import Tagify from "@yaireo/tagify";
-import { useEffect, useState, useRef } from "react"
-import { getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
-import { getColumns } from './columns';
-import { DataTable } from "./data-table";
+import { useEffect, useState } from "react";
+import { useStateHandler } from "../lib/useStateHandler";
+import { deleteReceipt, getReceipts, getSpend, getTags } from "../lib/mongoLibrary";
+import { DataTable, getColumns } from "./QueryTable";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
+import { getCategories } from "../lib/getCategories";
+import ReceiptDetail from "./ReceiptDetail";
+import { Select, Input } from "../ui/formElements";
+import { TagInput } from "../ui/receiptElements";
+import Image from "next/image";
 
 export default function SpendQuery() {
 
-    const router = useRouter();
-
-    const [queryData, setQueryData] = useState({
+    const initialState = {
         from: new Date(new Date().setDate(new Date().getDate() - new Date().getDay())).toISOString().split('T')[0],
         to: new Date().toISOString().split('T')[0],
-        tags: []
-    });
+        queryTags: [],
+        categories: []
+    };
+
+    const stateHandler = useStateHandler(initialState);
+    const { formData, changeFormData } = stateHandler;
 
     const [timeframe, setTimeframe] = useState('week');
 
@@ -48,54 +53,51 @@ export default function SpendQuery() {
 
             from = from.toISOString().split('T')[0];
             to = date.toISOString().split('T')[0];
-
-            query({ from, to });
-
         } else {
-            from = queryData.from;
-            to = queryData.to;
+            from = formData.from;
+            to = formData.to;
         };
 
-        setQueryData({ 
-            from, 
-            to, 
-            tags: queryData.tags 
+        changeFormData({
+            from,
+            to,
+            queryTags: formData.queryTags,
+            categories: formData.categories
         });
     };
 
     const [spend, setSpend] = useState(0);
     const [receipts, setReceipts] = useState([]);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
+    const [categories, setCategories] = useState([]);
     const [tags, setTags] = useState([]);
 
     const fetchTags = async () => {
         const tags = await getTags();
         setTags(tags);
-        tagify.current.whitelist = tags;
     };
 
-    const tagify = useRef(null);
+
+    const fetchCategories = async () => {
+        const categories = await getCategories();
+        categories.push('Mandatorní');
+        setCategories(categories);
+        changeFormData((prevState) => ({
+            ...prevState,
+            categories
+        }));
+    }
 
     useEffect(() => {
-        const inputElem = window.document.querySelector('input[name=tags]');
-        tagify.current = new Tagify(inputElem, {
-            whitelist: tags,
-            dropdown: {
-                enabled: 0,
-                maxItems: 5,
-                position: "text",
-                closeOnSelect: false,
-                highlightFirst: true
-            }
-        });
         fetchTags();
-        query();
+        fetchCategories();
+        query({ from: formData.from, to: formData.to });
     }, []);
 
     const query = async (input) => {
 
-        let from = queryData.from;
-        let to = queryData.to;
+        let from = formData.from;
+        let to = formData.to;
 
         if (input && input.preventDefault) {
             input.preventDefault();
@@ -104,69 +106,122 @@ export default function SpendQuery() {
             to = input.to;
         };
 
-        const spend = await getSpend({ from, to }, queryData.tags);
+        const spend = await getSpend({ from, to }, formData.queryTags, formData.categories);
         setSpend(spend);
-        const receipts = await getReceipts({ from, to }, queryData.tags, 0, 200);
+        const receipts = await getReceipts({ from, to }, formData.queryTags, formData.categories, 0, 200);
         setReceipts(receipts);
-    }
+    };
 
-    const handleInput = (e) => {
-        const { name, value } = e.target;
-        setQueryData((prevState) => ({
+    const handleCategoryInput = (category) => {
+        changeFormData((prevState) => ({
             ...prevState,
-            [name]: value
+            categories: formData.categories.includes(category) ? formData.categories.filter((cat) => cat != category) : [...formData.categories, category]
         }));
     };
 
-    const goHome = () => {
-        router.push('/');
+    const handleDeleteReceipt = async (receipt) => {
+        if (window.confirm("Opravdu smazat tuto účtenku?")) {
+            const response = await deleteReceipt(receipt.id);
+            if (response.ok) {
+                window.alert("Smazání účtenky úspěšně dokončeno");
+                window.location.reload();
+            } else {
+                window.alert(response.message);
+            }
+        }
     }
+
+    const timeframeOptions = [
+        { name: "Tento týden", value: "week" },
+        { name: "Posledních 7 dní", value: "weekToDate" },
+        { name: "Tento měsíc", value: "month" },
+        { name: "Posledních 30 dní", value: "monthToDate" },
+        { name: "Vlastní", value: "custom" },
+    ];
+
+    const handleSelectAllCategories = () => {
+        changeFormData((prevState) => ({
+            ...prevState,
+            categories
+        }));
+    };
+
+    const handleUnselectAllCategories = () => {
+        changeFormData((prevState) => ({
+            ...prevState,
+            categories: []
+        }));
+    };
 
     return (
         <>
-            <button className="nav-button button" onClick={goHome}>&lt; Zpět na přehled</button>
-            <div className="pad pad-top min-margin">
+            <div className="md:mt-4">
                 <form className="form" onSubmit={query}>
-                    <label>Časový úsek</label>
-                    <select name="timeframe" id="timeframe" onChange={(e) => changeTimeframe(e)}>
-                        <option value="week">Tento týden</option>
-                        <option value="weekToDate">Posledních 7 dní</option>
-                        <option value="month">Tento měsíc</option>
-                        <option value="monthToDate">Posledních 30 dní</option>
-                        <option value="custom">Vlastní</option>
-                    </select>
-                    {timeframe === 'custom' ?
-                        <div>
-                            <label className="min-margin">Datum od</label>
-                            <input type="date" value={queryData.from} name="from" onChange={handleInput}></input>
-                            <label className="min-margin">Datum do</label>
-                            <input type="date" value={queryData.to} name="to" onChange={handleInput}></input>
-                        </div> : <div />
-                    }
-                    <label className="min-margin">Značky</label>
-                    <input name="tags" value={queryData.tags} onChange={handleInput}></input>
-                    <button className="min-margin" type="submit">OK</button>
-                </form>
-                {receipts.length > 0 ?
-                    <div>
-                        <h1>Celková útrata: {spend} Kč</h1>
-                        <DataTable columns={getColumns(setSelectedReceipt)} data={receipts} />
+                    <div className="ml-12">
+                        <div className="flex flex-col">
+                            <label className="w-25 mb-1">Kategorie</label>
+                            <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                                {categories.map((category) => (
+                                    <button type="button" key={category} onClick={() => handleCategoryInput(category)}
+                                        className={`button ${formData.categories.includes(category) ? "button-group-active" : ""}`}
+                                    > {category} </button>
+                                ))}
+                                <button className="cursor-pointer" style={{ paddingLeft: '10px' }} onClick={handleSelectAllCategories}>
+                                    <Image src="/icons/select-all.svg" alt="Select all" width={18} height={18} />
+                                </button>
+                                <button className="cursor-pointer" style={{ paddingLeft: '10px' }} onClick={handleUnselectAllCategories}>
+                                    <Image src="/icons/unselect-all.svg" alt="Unselect all" width={18} height={18} />
+                                </button>
+                            </div>
 
-                        <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
-                            <DialogTitle>
-                                Detail
-                            </DialogTitle>
-                            <DialogContent>
-                                <p>{JSON.stringify(selectedReceipt)}</p>
-                            </DialogContent>
-                        </Dialog>
-                    </div> :
-                    <div>
-                        <p>Žádné výsledky.</p>
+                        </div>
+                        <div className="flex flex-row my-2">
+                            <Select
+                                options={timeframeOptions}
+                                handler={stateHandler}
+                                changeHandler={changeTimeframe}
+                                name="timeframe"
+                                label="Časový úsek"
+                            />
+                        </div>
+                        {timeframe === 'custom' ?
+                            <div className="flex-wrap">
+                                <Input label="Datum od" type="date" name="from" value={formData.from} handler={stateHandler} />
+                                <Input label="Datum do" type="date" name="to" value={formData.to} handler={stateHandler} />
+                            </div> : <div />
+                        }
+                        <div className="flex flex-row">
+                            <TagInput handler={stateHandler} tags={tags} name="queryTags" />
+                        </div>
                     </div>
-                }
+                    <div className="w-full flex justify-center md:justify-start md:ml-12 mt-4">
+                        <button className="button" type="submit">Aktualizovat</button>
+                    </div>
 
+                </form>
             </div>
+            {receipts.length > 0 ?
+                <div>
+                    <p className="mt-4 ml-12 text-lg">Celková útrata: {spend} Kč</p>
+                    <DataTable columns={getColumns(setSelectedReceipt, handleDeleteReceipt)} data={receipts} />
+
+                    <Dialog open={!!selectedReceipt} onOpenChange={() => setSelectedReceipt(null)}>
+                        <DialogContent
+                            className="fixed bg-[#09002f] text-black dark:text-white p-6 shadow-lg max-h-[85vh] overflow-y-auto md:max-w-[35vw]">
+                            <DialogTitle className="text-xl">Detail účtenky</DialogTitle>
+                            <ReceiptDetail
+                                receipt={selectedReceipt}
+                                categories={categories}
+                                tags={tags}
+                                handleDeletion={handleDeleteReceipt}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div> :
+                <div>
+                    <p>Žádné výsledky.</p>
+                </div>
+            }
         </>
     )
 }
