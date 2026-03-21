@@ -482,7 +482,11 @@ export async function updateReceipt(formData) {
 
     const { amount, description, category, type, date } = formData;
     let tags = formData.tags ? formData.tags : [];
-    tags = tags.reduce(acc, curr => acc.push(curr.trim().toLowerCase()), []);
+    tags = typeof tags === "string" ? JSON.parse(tags) : tags;
+    tags = tags.reduce((acc, curr) => {
+        acc.push(curr.value.trim().toLowerCase());
+        return acc;
+    }, []);
 
     if (category && amount && description) {
 
