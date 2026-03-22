@@ -1,9 +1,9 @@
-import WeeklySummary from "@/components/WeeklySummary";
+import Weeks from "@/components/interfaces/Weeks";
 
 export default async function WeeklySummaryPage() {
     return (
         <div>
-            <WeeklySummary />
+            <Weeks />
         </div>
     )
 }

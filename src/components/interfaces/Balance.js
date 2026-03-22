@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useState } from "react";
-import { getBalance, logNewBalance, logIncome } from "./lib/mongoLibrary";
-import AnimateValue from "./lib/animateValue";
-import { Select, Input } from "./ui/formElements";
-import { useStateHandler } from "./lib/useStateHandler";
+import { getBalance, logNewBalance, logIncome } from "../lib/mongoLibrary";
+import AnimateValue from "../ui/AnimateValue";
+import { Select, Input } from "../ui/elements/formElements";
+import { useStateHandler } from "../lib/useStateHandler";
 
-export default function BalanceInterface() {
+export default function Balance() {
 
     const [balanceData, setBalanceData] = useState({
         lastBalance: 0,

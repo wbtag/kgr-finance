@@ -73,61 +73,11 @@ export async function getSpend(timeframe, tags, categories) {
     return spend;
 };
 
-// Deprecated
-export async function getWeeklySpend() {
-
-    const nowDate = new Date();
-    const dayOfWeek = nowDate.getDay();
-
-    const startOfWeekDate = new Date();
-    startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
-    const ts = startOfWeekDate.setHours(0, 0, 0, 0);
-
-    let excludedTags = process.env['ExcludedTags'] || '';
-    excludedTags = excludedTags.split(',');
-
-    const db = await getDatabase();
-    const output = await db.collection("receipts").aggregate([
-        {
-            $facet: {
-                withExcluded: [{ $match: { date: { $gte: ts }, tags: { $nin: excludedTags } } },
-                {
-                    $group: {
-                        _id: null,
-                        weeklySpend: { $sum: "$amount" }
-                    }
-                }],
-                withoutExcluded: [
-                    { $match: { date: { $gte: ts } } },
-                    {
-                        $group: {
-                            _id: null,
-                            weeklySpend: { $sum: "$amount" }
-                        }
-                    }
-                ]
-            }
-        }
-    ]).toArray();
-
-    const cleanWeeklySpend = output[0]?.withExcluded?.[0]?.weeklySpend || 0;
-    const fullWeeklySpend = output[0]?.withoutExcluded?.[0]?.weeklySpend || 0;
-
-    return {
-        cleanWeeklySpend,
-        fullWeeklySpend
-    }
-};
-
 export async function getWeeklySpendByCategory() {
-    const nowDate = new Date();
-    const dayOfWeek = nowDate.getDay();
+    const date = new Date();
+    const week = getWeek(date);
 
-    const startOfWeekDate = new Date();
-    startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
-    const ts = startOfWeekDate.setHours(0, 0, 0, 0);
-
-    const findObj = { date: { $gte: ts } };
+    const findObj = { week: { $eq: week } };
 
     let categories = process.env['WeeklySpendCategories'] || '';
     categories = JSON.parse(categories);
@@ -312,14 +262,19 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
     return output
 }
 
-export async function getSpendByWeek() {
+export async function getSpendByWeek(year) {
 
     const db = await getDatabase();
 
     const spendByWeek = await db.collection("receipts").aggregate([
         {
+            $match: {
+                year: { $eq: year }
+            }
+        },
+        {
             $group: {
-                _id: { $max: "$weekId" },
+                _id: { $max: "$week" },
                 amount: { $sum: "$amount" },
                 date: { $max: "$date" }
             }
@@ -338,39 +293,20 @@ export async function getSpendByWeek() {
     return spendByWeek
 }
 
-export async function getWeeklySpendDetail(weekId) {
+export async function getWeeklySpendDetail(week, year) {
     const db = await getDatabase();
+    const receipts = await db.collection("receipts").find({ year: parseInt(year), week: parseInt(week) }).toArray();
 
-    const receipts = await db.collection("receipts").find({ weekId: { $eq: weekId } }).toArray();
+    const output = receipts.reduce((acc, curr) => {
+        const { _id, ...receipt } = curr;
+        acc.push({
+            id: _id.toHexString(),
+            ...receipt
+        });
+        return acc;
+    }, []);
 
-    const groupedReceipts = Object.values(receipts.reduce((acc, item) => {
-        const id = item._id.toHexString();
-        if (!acc[id]) {
-            acc[id] = {
-                id,
-                description: item.description,
-                date: item.date,
-                weekId: item.weekId,
-                amount: 0,
-                items: item.type ? item.type === 'extended' ? [] : null : null
-            }
-        }
-
-        acc[id].amount += item.amount;
-
-        if (acc[id].items) {
-            const { _id, ...params } = item;
-            acc[id].items.push({
-                id: _id.toHexString(),
-                ...params
-            });
-        };
-
-        return acc
-    }, {})
-    );
-
-    return groupedReceipts
+    return output
 }
 
 export async function createNewReceipt(formData) {
@@ -391,7 +327,6 @@ export async function createNewReceipt(formData) {
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
         const year = receiptDate.getFullYear();
-        const weekId = `${week}-${year}`;
 
         const dateCreated = Date.now();
 
@@ -414,10 +349,10 @@ export async function createNewReceipt(formData) {
                 category,
                 date: receiptDateTimestamp,
                 dateCreated,
-                weekId,
+                week,
+                year,
                 tags: cleanedTags,
                 amount: typeSafeAmount,
-                weekId: weekYear,
                 description
             };
 
@@ -483,8 +418,10 @@ export async function updateReceipt(formData) {
     const { amount, description, category, type, date } = formData;
     let tags = formData.tags ? formData.tags : [];
     tags = typeof tags === "string" ? JSON.parse(tags) : tags;
+
     tags = tags.reduce((acc, curr) => {
-        acc.push(curr.value.trim().toLowerCase());
+        const tag = curr.value ? curr.value : curr;
+        acc.push(tag.trim().toLowerCase());
         return acc;
     }, []);
 

@@ -48,7 +48,7 @@ export function ReceiptItems({ handler, tags }) {
                                     name={`amount-${index}`}
                                     value={formData.items[index].amount}
                                     onChange={(e) => changeArrayItem(e, index)}
-                                    className="input px-[10px] py-[11px] border-1 rounded-[5px] w-[65px] md:w-[180px] focus:outline-none placeholder:text-black/25"
+                                    className="input px-[10px] py-[11px] border-1 border-white/50 rounded-[5px] w-[65px] md:w-[180px] focus:outline-none placeholder:text-black/25"
                                 />
                             </div>
                             <div>
@@ -58,7 +58,7 @@ export function ReceiptItems({ handler, tags }) {
                         {
                             index != 0 ?
                                 <div className="py-[25px] px-2">
-                                    <button type="button" name="items" className="h-8 pl-2 button" onClick={(e) => removeArrayItem(e, index)}>-</button>
+                                    <button type="button button--ux" name="items" className="h-8 pl-2 button" onClick={(e) => removeArrayItem(e, index)}>-</button>
                                 </div> :
                                 <div />
                         }

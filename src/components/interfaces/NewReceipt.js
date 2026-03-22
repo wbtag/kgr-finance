@@ -1,13 +1,13 @@
 'use client'
 import React, { useEffect, useRef, useState } from "react";
 import Tagify from '@yaireo/tagify';
-import { useStateHandler } from "./lib/useStateHandler";
-import { createNewReceipt, getTags } from "./lib/mongoLibrary";
-import { getCategories } from "./lib/getCategories";
-import Switcher from "./Switcher";
-import { ReceiptParams, ReceiptItems } from "./ui/receiptElements";
+import { useStateHandler } from "../lib/useStateHandler";
+import { createNewReceipt, getTags } from "../lib/mongoLibrary";
+import { getCategories } from "../lib/getCategories";
+import Switcher from "../ui/Switcher";
+import { ReceiptParams, ReceiptItems } from "../ui/elements/receiptElements";
 
-export default function ReceiptInterface() {
+export default function NewReceipt() {
 
     const [receiptType, setReceiptType] = useState('simple');
     const [tags, setTags] = useState([]);

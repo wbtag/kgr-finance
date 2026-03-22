@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { getMonthlySpendByCategory, getWeeklySpendByCategory, getBalance } from "./lib/mongoLibrary";
-import AnimateValue from "./lib/animateValue";
-import SpendTable from "./spendOverview/SpendTable";
-import Switcher from "./Switcher";
+import { getMonthlySpendByCategory, getWeeklySpendByCategory, getBalance } from "../lib/mongoLibrary";
+import { getWeek } from "date-fns";
+import AnimateValue from "../ui/AnimateValue";
+import SpendTable from "../ui/SpendTable";
+import Switcher from "../ui/Switcher";
 import Link from "next/link";
 
-export default function SpendInterface() {
+export default function Spend() {
 
     const [weeklySpend, setWeeklySpend] = useState(0);
     const [weeklyOtherSpend, setWeeklyOtherSpend] = useState(0);
@@ -53,8 +54,12 @@ export default function SpendInterface() {
             <div>
                 <div className="flex flex-wrap md:my-4 justify-center">
                     <div className="my-2 w-80 text-center">
-                        <p className="text-3xl">{animatedWeeklySpend.toFixed()} Kč</p>
-                        <p>Útrata tento týden</p>
+                        <Link href={
+                            `/weekly-summary/${new Date().getFullYear()}/${getWeek(new Date(), { weekStartsOn: 0 })}`
+                        }>
+                            <p className="text-3xl">{animatedWeeklySpend.toFixed()} Kč</p>
+                            <p>Útrata tento týden</p>
+                        </Link>
                     </div>
                     <div className="my-2 w-80 text-center">
                         <p className="text-3xl">{animatedMonthlySpend.toFixed()} Kč</p>
@@ -69,8 +74,8 @@ export default function SpendInterface() {
                 </div>
                 <div className="grid justify-center">
                     <div className='inline-flex py-5 gap-x-1 w-80 justify-center'>
-                        <Switcher name='week' text='Týden' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange}/>
-                        <Switcher name='month' text='Měsíc' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange}/>
+                        <Switcher name='week' text='Týden' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange} />
+                        <Switcher name='month' text='Měsíc' stateTracker={spendPeriod} changeHandler={handleSpendPeriodChange} />
                     </div>
                     <div className="pb-4">
                         {spendPeriod === 'week' ?
