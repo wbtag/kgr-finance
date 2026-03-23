@@ -10,8 +10,6 @@
     "sync": "node migrations/syncProdData/sync.js"
   },
   "dependencies": {
-    "@azure/cosmos": "^4.4.1",
-    "@radix-ui/react-dialog": "^1.1.14",
     "@tailwindcss/postcss": "^4.1.13",
     "@tanstack/react-table": "^8.21.3",
     "@yaireo/tagify": "^4.35.1",
