@@ -42,7 +42,7 @@ export default function Weeks() {
                         className="grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4 py-3 sm:py-3.5 border-b border-white/10"
                     >
                         <p className="text-white/50 text-xs sm:text-sm tabular-nums whitespace-nowrap tracking-wide">
-                            {week._id.padStart(2, '0')}. týden
+                            {week._id.toString().padStart(2, '0')}. týden
                         </p>
                         <span className="text-white/90 text-sm sm:text-base tabular-nums whitespace-nowrap">
                             {week.amount.toLocaleString("cs-CZ")} Kč
