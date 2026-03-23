@@ -33,7 +33,7 @@ export function ReceiptItems({ handler, tags }) {
                 <div>
                     {formData.items.length <= 10 ?
                         <div>
-                            <button className="button mt-2" name="items" onClick={(e) => addArrayItem(e)}>Přidat další položku</button>
+                            <button className="button button--active mt-2" name="items" onClick={(e) => addArrayItem(e)}>Přidat další položku</button>
                         </div> :
                         <div />
                     }

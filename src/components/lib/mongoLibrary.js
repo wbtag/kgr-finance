@@ -124,7 +124,7 @@ export async function getMonthlySpendByCategory() {
     const nowDate = new Date();
     const day = nowDate.getDate();
 
-    const fiscalMonthStart = parseInt(process.env['FiscalMonthStart']) || 15;
+    const fiscalMonthStart = parseInt(process.env['NEXT_PUBLIC_FiscalMonthStart']) || 8;
 
     let from = new Date();
     from.setDate(fiscalMonthStart);
@@ -269,7 +269,7 @@ export async function getSpendByWeek(year) {
     const spendByWeek = await db.collection("receipts").aggregate([
         {
             $match: {
-                year: { $eq: year }
+                year: { $eq: parseInt(year) }
             }
         },
         {
@@ -326,7 +326,11 @@ export async function createNewReceipt(formData) {
         const receiptDateTimestamp = receiptDate.getTime();
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
-        const year = receiptDate.getFullYear();
+        let year = receiptDate.getFullYear();
+
+        if (receiptDate.getMonth === 11 && week === 1) {
+            year = receiptDate.getFullYear() + 1;
+        }
 
         const dateCreated = Date.now();
 
@@ -415,7 +419,7 @@ export async function createNewReceipt(formData) {
 
 export async function updateReceipt(formData) {
 
-    const { amount, description, category, type, date } = formData;
+    const { id, amount, description, category, type, date, items } = formData;
     let tags = formData.tags ? formData.tags : [];
     tags = typeof tags === "string" ? JSON.parse(tags) : tags;
 
@@ -439,7 +443,6 @@ export async function updateReceipt(formData) {
 
         if (type === 'extended') {
 
-            const { items } = formData;
             let amountSum = 0;
 
             if (items.length > 0) {
@@ -491,7 +494,7 @@ export async function updateReceipt(formData) {
 
         const db = await getDatabase();
         await db.collection("receipts").updateOne(
-            { _id: new ObjectId(formData.id) },
+            { _id: new ObjectId(id) },
             { $set: body }
         )
 
@@ -633,4 +636,9 @@ export async function getIncome(timeframe) {
     const income = output.reduce((acc, currentItem) => acc + currentItem.amount, 0)
 
     return income;
+}
+
+export async function getYears() {
+    const db = await getDatabase();
+    return await db.collection("receipts").distinct("year");
 }

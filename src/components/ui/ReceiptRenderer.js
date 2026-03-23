@@ -6,7 +6,6 @@ import { useEffect } from "react";
 
 export default function ReceiptRenderer({ receipts, categories }) {
 
-
     const [tags, setTags] = useState([]);
 
     const fetchTags = async () => {
@@ -96,10 +95,10 @@ function ReceiptRow({ receipt, categories, tags }) {
                             <div>
                                 <div className="flex flex-row">
                                     <p className="text-white/90 min-w-20 text-sm sm:text-base truncate tracking-wide">
-                                        Vytvořeno:
+                                        Datum:
                                     </p>
                                     <p className="text-white/90 text-sm sm:text-base truncate tracking-wide">
-                                        {new Date(receipt.dateCreated).toLocaleDateString('cs-CZ')}
+                                        {new Date(receipt.date).toLocaleDateString('cs-CZ')}
                                     </p>
                                 </div>
                                 <div className="flex flex-row">
@@ -149,27 +148,14 @@ function ReceiptRow({ receipt, categories, tags }) {
 
 function ReceiptEditForm({ receipt, tags, categories, onCancel, onSaved }) {
 
-    const hasItems = Array.isArray(receipt.items) && receipt.items.length > 0;
+    const {date, ...rest} = receipt;
 
-    const toDateInputValue = (raw) => {
-        if (!raw) return "";
-        const d = new Date(raw);
-        return isNaN(d) ? "" : d.toISOString().split("T")[0];
-    };
-
-    const handler = useStateHandler({
-        date: toDateInputValue(receipt.dateCreated),
-        description: receipt.description ?? "",
-        amount: receipt.amount ?? "",
-        category: receipt.category ?? "",
-        tags: Array.isArray(receipt.tags) ? [...receipt.tags] : [],
-        items: hasItems
-            ? receipt.items.map((item) => ({
-                amount: item.amount ?? "",
-                tags: Array.isArray(item.tags) ? [...item.tags] : [],
-            }))
-            : [],
+    const stateHandler = useStateHandler({
+        date: new Date(date).toISOString().split('T')[0],
+        ...rest
     });
+
+    const { formData } = stateHandler;
 
     const [saving, setSaving] = useState(false);
 
@@ -179,18 +165,7 @@ function ReceiptEditForm({ receipt, tags, categories, onCancel, onSaved }) {
         setSaving(true);
 
         try {
-            const payload = {
-                id: receipt.id,
-                category: receipt.category,
-                type: receipt.type,
-                date: handler.formData.date,
-                description: handler.formData.description,
-                amount: handler.formData.amount,
-                tags: handler.formData.tags,
-                items: handler.formData.items,
-            };
-
-            const response = await updateReceipt(payload);
+            const response = await updateReceipt(formData);
 
             if (response.ok) {
                 onSaved();
@@ -207,16 +182,16 @@ function ReceiptEditForm({ receipt, tags, categories, onCancel, onSaved }) {
             className="py-3 flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
         >
-            <ReceiptParams handler={handler} categories={categories} tags={tags} />
+            <ReceiptParams handler={stateHandler} categories={categories} tags={tags} />
 
-            {(hasItems || handler.formData.items.length > 0) && (
-                <ReceiptItems handler={handler} tags={tags} />
+            {receipt.type === 'extended' && (
+                <ReceiptItems handler={stateHandler} tags={tags} />
             )}
 
             <div className="flex gap-2 justify-end pt-2">
                 <button
                     type="button"
-                    className="button"
+                    className="button button--active"
                     onClick={(e) => { e.stopPropagation(); onCancel(); }}
                 >
                     Zrušit
@@ -227,7 +202,7 @@ function ReceiptEditForm({ receipt, tags, categories, onCancel, onSaved }) {
                     onClick={handleSave}
                     disabled={saving}
                 >
-                    {saving ? "Ukládám…" : "Uložit"}
+                    {saving ? "Ukládá se…" : "Uložit"}
                 </button>
             </div>
         </div>

@@ -12,6 +12,7 @@ export default function NewReceipt() {
     const [receiptType, setReceiptType] = useState('simple');
     const [tags, setTags] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [saving, setSaving] = useState(false);
 
     const handleReceiptTypeChange = (e) => {
         if (e.target.name === 'extended') {
@@ -45,6 +46,8 @@ export default function NewReceipt() {
     const submitForm = async (e) => {
         e.preventDefault();
 
+        setSaving(true);
+
         if (
             receiptType != "extended" || 
             Number(formData.amount) - formData.items.reduce((acc, curr) => acc + Number(curr.amount), 0) === 0
@@ -66,10 +69,10 @@ export default function NewReceipt() {
                 window.alert(e.message);
             }
         } else {
-            window.alert("Chyba: Součet položek v rozšířené účtence se musí rovnat celkové hodnotě účtenky.")
+            window.alert("Chyba: Součet položek v rozšířené účtence se musí rovnat celkové hodnotě účtenky.");
         }
 
-
+        setSaving(false);
     };
 
     const fetchTags = async () => {
@@ -123,7 +126,11 @@ export default function NewReceipt() {
                         }
                     </div>
                     <div className="w-full flex mt-2 pr-12 justify-center md:justify-start">
-                        <button className="button" onClick={submitForm}>Odeslat</button>
+                        <button 
+                            className="button button--active" 
+                            onClick={submitForm}
+                            disabled={saving}    
+                        >{saving ? 'Odesílá se...' : 'Odeslat'}</button>
                     </div>
                 </div>
 

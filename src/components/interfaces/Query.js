@@ -34,7 +34,6 @@ export default function Query() {
     const changeTimeframe = (e) => {
 
         const timeframe = e.target.value;
-        console.log(e)
 
         let from, to;
 
@@ -123,9 +122,7 @@ export default function Query() {
             from = input.from;
             to = input.to;
         };
-
-        // const spend = await getSpend({ from, to }, formData.queryTags, formData.categories);
-        // setSpend(spend);
+        
         const receipts = await getReceipts({ from, to }, formData.queryTags, formData.categories, 0, 200);
         setReceipts(receipts);
         setFilteredReceipts(receipts, formData.categories);
@@ -195,7 +192,7 @@ export default function Query() {
             {filteredReceipts.length > 0 ?
                 <div>
                     <div className="w-full max-w-2xl mx-auto px-4 sm:px-0 py-2">
-                        <ReceiptRenderer receipts={filteredReceipts} />
+                        <ReceiptRenderer receipts={filteredReceipts} categories={categories}  />
                     </div>
                 </div> :
                 <div>

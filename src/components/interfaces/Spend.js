@@ -62,8 +62,10 @@ export default function Spend() {
                         </Link>
                     </div>
                     <div className="my-2 w-80 text-center">
-                        <p className="text-3xl">{animatedMonthlySpend.toFixed()} Kč</p>
-                        <p>Útrata tento měsíc</p>
+                        <Link href="/query">
+                            <p className="text-3xl">{animatedMonthlySpend.toFixed()} Kč</p>
+                            <p>Útrata tento měsíc</p>
+                        </Link>
                     </div>
                     <div className="my-2 w-80 text-center">
                         <Link href="/balance">

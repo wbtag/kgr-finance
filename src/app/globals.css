@@ -299,6 +299,7 @@ a {
 
 .tagify__input {
   flex: 1 1 auto;
+  --tags-border-color: rgb(255 255 255 / 0.50);
 }
 
 .tagify__dropdown {
