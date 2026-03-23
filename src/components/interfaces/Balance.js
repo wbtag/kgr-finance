@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useState } from "react";
-import { getBalance, logNewBalance, logIncome } from "./lib/mongoLibrary";
-import AnimateValue from "./lib/animateValue";
-import { Select, Input } from "./ui/formElements";
-import { useStateHandler } from "./lib/useStateHandler";
+import { getBalance, logNewBalance, logIncome } from "../lib/mongoLibrary";
+import AnimateValue from "../ui/AnimateValue";
+import { Select, Input } from "../ui/elements/formElements";
+import { useStateHandler } from "../lib/useStateHandler";
 
-export default function BalanceInterface() {
+export default function Balance() {
 
     const [balanceData, setBalanceData] = useState({
         lastBalance: 0,
@@ -15,10 +15,12 @@ export default function BalanceInterface() {
         incomeSinceLastBalance: 0
     });
 
+    const [saving, setSaving] = useState(false);
+
     const lastBalance = AnimateValue(balanceData.lastBalance);
     const estimatedBalance = AnimateValue(balanceData.estimatedBalance);
     const spendSinceLastBalance = AnimateValue(balanceData.spendSinceLastBalance);
-    const incomeSinceLastBalance = AnimateValue(balanceData.incomeSinceLastBalance)
+    const incomeSinceLastBalance = AnimateValue(balanceData.incomeSinceLastBalance);
 
     const formattedBalanceDate = () => {
         const lastBalanceDate = balanceData.lastBalanceDate === 0 ? Date.now() : balanceData.lastBalanceDate;
@@ -52,6 +54,8 @@ export default function BalanceInterface() {
     const submitForm = async (e) => {
         e.preventDefault();
 
+        setSaving(true);
+
         const formId = e.target.form?.id;
 
         if (formId === 'balance') {
@@ -60,6 +64,7 @@ export default function BalanceInterface() {
                 ...newBalanceData,
                 incomeSinceLastBalance: 0
             });
+            balanceStateHandler.clearForm();
         } else if (formId === 'income') {
             const formData = incomeStateHandler.formData;
             await logIncome(formData);
@@ -67,8 +72,11 @@ export default function BalanceInterface() {
                 ...prevState,
                 incomeSinceLastBalance: parseInt(balanceData.incomeSinceLastBalance) + parseInt(formData.amount),
                 estimatedBalance: parseInt(balanceData.estimatedBalance) + parseInt(formData.amount)
-            }))
-        }
+            }));
+            incomeStateHandler.clearForm();
+        };
+
+        setSaving(false);
     };
 
     const incomeTypes = ["Výplata", "Dar", "Přeplatek", "Úroky", "Jiné"];
@@ -100,12 +108,20 @@ export default function BalanceInterface() {
                         <Select label="Typ" options={incomeTypes} blankOption={true} name="type" handler={incomeStateHandler} />
                         <Input label="Popis" name="description" handler={incomeStateHandler} />
                         <Input label="Částka" name="amount" type="number" handler={incomeStateHandler} />
-                        <button className="button mt-3" onClick={submitForm}>Uložit</button>
+                        <button
+                            className="button button--active mt-3"
+                            onClick={submitForm}
+                            disabled={saving}
+                        >{saving ? 'Ukládá se...' : 'Uložit'}</button>
                     </form>
                     <form className="my-3 w-80" id="balance">
                         <p className="text-xl">Aktualizace zůstatku</p>
                         <Input label="Nový zůstatek" type="number" name="balance" handler={balanceStateHandler} />
-                        <button className="button mt-3" onClick={submitForm}>Uložit</button>
+                        <button
+                            className="button button--active mt-3"
+                            onClick={submitForm}
+                            disabled={saving}
+                        >{saving ? 'Ukládá se...' : 'Uložit'}</button>
                     </form>
                 </div>
             </div>

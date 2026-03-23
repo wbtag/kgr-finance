@@ -1,11 +1,11 @@
-import ReceiptInterface from "@/components/ReceiptInterface";
+import NewReceipt from "@/components/interfaces/NewReceipt";
 
 export default async function ReceiptPage() {
 
     return (
         <>
             <div>
-                <ReceiptInterface />
+                <NewReceipt />
             </div>
         </>
     )

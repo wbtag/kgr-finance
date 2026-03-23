@@ -14,19 +14,19 @@ export function Input({ label, handler, type, name, value }) {
                     name={name}
                     value={value ?? formData[name]}
                     onChange={handleInput}
-                    className="input px-[10px] py-[11px] border-1 rounded-[5px] w-[210px] focus:outline-none placeholder:text-black/25"
+                    className="input px-[10px] py-[11px] border-1 border-white/50 rounded-[5px] w-[210px] focus:outline-none placeholder:text-black/25"
                 />
             </div>
         </>
     )
 }
 
-export function Select({ label, handler, name, options, blankOption, changeHandler }) {
+export function Select({ label, handler, name, options, blankOption, changeHandler, value }) {
 
     const {
         handleInput,
         formData
-    } = handler;
+    } = handler ?? {};
 
     return (
         <>
@@ -34,9 +34,9 @@ export function Select({ label, handler, name, options, blankOption, changeHandl
                 <Label label={label} />
                 <select
                     name={name}
-                    value={formData[name]}
+                    value={value ?? formData[name]}
                     onChange={changeHandler ?? handleInput}
-                    className="input px-[10px] py-[11px] border-1 border-white rounded-[5px] w-[210px] focus:outline-none placeholder:text-black/25 bg-[#09002f]"
+                    className="input px-[10px] py-[11px] border-1 border-white/50 rounded-[5px] w-[210px] focus:outline-none placeholder:text-black/25 bg-[#09002f]"
                 >
                     {
                         blankOption ?

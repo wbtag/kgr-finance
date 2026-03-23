@@ -5,6 +5,7 @@
   html {
     color-scheme: dark;
     background: #09002f;
+    overflow-y: scroll;
   }
 }
 
@@ -33,18 +34,39 @@ a {
 }
 
 .button {
-  background: none;
-  border-style: solid;
-  border-width: 1px;
-  border-color: antiquewhite;
-  border-radius: 10px;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: rgb(255 255 255 / 0.50);
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 4px;
   cursor: pointer;
-  padding: 2px 20px;
+  transition: color 150ms, border-color 150ms;
+}
+
+.button:hover {
+  color: rgb(255 255 255 / 0.80);
+  border-color: rgb(255 255 255 / 0.30);
+}
+
+.button--active {
+  color: rgb(255 255 255 / 0.90);
+  border-color: rgb(255 255 255 / 0.40);
 }
 
 .button-group-active {
   background: #fff;
-  color:#09002f;
+  color: #09002f;
+}
+
+.button--ux {
+  color: rgb(255 255 255);
+  border-color: rgb(255 255 255 / 0.70);
+}
+
+.button--ux:hover {
+  color: rgb(255 255 255 / 0.90);
+  border-color: rgb(255 255 255 / 0.50);
 }
 
 .nav-button {
@@ -108,7 +130,7 @@ a {
 }
 
 :root {
-  --global-text-color: #fff; 
+  --global-text-color: #fff;
   --tag-bg: brown;
   --radius: 0.625rem;
   --card: oklch(1 0 0);
@@ -270,14 +292,16 @@ a {
   --tag-text-color: white;
   --tag-remove-btn-color: white;
   --tag-hover: #09002f;
+  --tags-border-color: rgb(255 255 255 / 0.50);
   border-radius: 10px;
   max-width: 250px;
 }
 
 .tagify__input {
   flex: 1 1 auto;
+  --tags-border-color: rgb(255 255 255 / 0.50);
 }
 
 .tagify__dropdown {
-  color:#09002f
+  color: #09002f
 }

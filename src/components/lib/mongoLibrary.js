@@ -73,61 +73,11 @@ export async function getSpend(timeframe, tags, categories) {
     return spend;
 };
 
-// Deprecated
-export async function getWeeklySpend() {
-
-    const nowDate = new Date();
-    const dayOfWeek = nowDate.getDay();
-
-    const startOfWeekDate = new Date();
-    startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
-    const ts = startOfWeekDate.setHours(0, 0, 0, 0);
-
-    let excludedTags = process.env['ExcludedTags'] || '';
-    excludedTags = excludedTags.split(',');
-
-    const db = await getDatabase();
-    const output = await db.collection("receipts").aggregate([
-        {
-            $facet: {
-                withExcluded: [{ $match: { date: { $gte: ts }, tags: { $nin: excludedTags } } },
-                {
-                    $group: {
-                        _id: null,
-                        weeklySpend: { $sum: "$amount" }
-                    }
-                }],
-                withoutExcluded: [
-                    { $match: { date: { $gte: ts } } },
-                    {
-                        $group: {
-                            _id: null,
-                            weeklySpend: { $sum: "$amount" }
-                        }
-                    }
-                ]
-            }
-        }
-    ]).toArray();
-
-    const cleanWeeklySpend = output[0]?.withExcluded?.[0]?.weeklySpend || 0;
-    const fullWeeklySpend = output[0]?.withoutExcluded?.[0]?.weeklySpend || 0;
-
-    return {
-        cleanWeeklySpend,
-        fullWeeklySpend
-    }
-};
-
 export async function getWeeklySpendByCategory() {
-    const nowDate = new Date();
-    const dayOfWeek = nowDate.getDay();
+    const date = new Date();
+    const week = getWeek(date);
 
-    const startOfWeekDate = new Date();
-    startOfWeekDate.setDate(nowDate.getDate() - dayOfWeek);
-    const ts = startOfWeekDate.setHours(0, 0, 0, 0);
-
-    const findObj = { date: { $gte: ts } };
+    const findObj = { week: { $eq: week } };
 
     let categories = process.env['WeeklySpendCategories'] || '';
     categories = JSON.parse(categories);
@@ -174,7 +124,7 @@ export async function getMonthlySpendByCategory() {
     const nowDate = new Date();
     const day = nowDate.getDate();
 
-    const fiscalMonthStart = parseInt(process.env['FiscalMonthStart']) || 15;
+    const fiscalMonthStart = parseInt(process.env['NEXT_PUBLIC_FiscalMonthStart']) || 8;
 
     let from = new Date();
     from.setDate(fiscalMonthStart);
@@ -312,6 +262,53 @@ export async function getReceipts(timeframe, tags, categories, offset, limit) {
     return output
 }
 
+export async function getSpendByWeek(year) {
+
+    const db = await getDatabase();
+
+    const spendByWeek = await db.collection("receipts").aggregate([
+        {
+            $match: {
+                year: { $eq: parseInt(year) }
+            }
+        },
+        {
+            $group: {
+                _id: { $max: "$week" },
+                amount: { $sum: "$amount" },
+                date: { $max: "$date" }
+            }
+        },
+        { $sort: { date: -1 } },
+        {
+            $project: {
+                _id: 1,
+                amount: 1,
+            }
+        },
+        { $skip: 0 },
+        { $limit: 20 }
+    ]).toArray();
+
+    return spendByWeek
+}
+
+export async function getWeeklySpendDetail(week, year) {
+    const db = await getDatabase();
+    const receipts = await db.collection("receipts").find({ year: parseInt(year), week: parseInt(week) }).toArray();
+
+    const output = receipts.reduce((acc, curr) => {
+        const { _id, ...receipt } = curr;
+        acc.push({
+            id: _id.toHexString(),
+            ...receipt
+        });
+        return acc;
+    }, []);
+
+    return output
+}
+
 export async function createNewReceipt(formData) {
     if (formData.receiptType && formData.date) {
 
@@ -329,8 +326,11 @@ export async function createNewReceipt(formData) {
         const receiptDateTimestamp = receiptDate.getTime();
 
         const week = getWeek(receiptDate, { weekStartsOn: 0 });
-        const year = receiptDate.getFullYear();
-        const weekId = `${week}-${year}`;
+        let year = receiptDate.getFullYear();
+
+        if (receiptDate.getMonth === 11 && week === 1) {
+            year = receiptDate.getFullYear() + 1;
+        }
 
         const dateCreated = Date.now();
 
@@ -353,7 +353,8 @@ export async function createNewReceipt(formData) {
                 category,
                 date: receiptDateTimestamp,
                 dateCreated,
-                weekId,
+                week,
+                year,
                 tags: cleanedTags,
                 amount: typeSafeAmount,
                 description
@@ -418,11 +419,13 @@ export async function createNewReceipt(formData) {
 
 export async function updateReceipt(formData) {
 
-    const { amount, description, category, type, date } = formData;
+    const { id, amount, description, category, type, date, items } = formData;
     let tags = formData.tags ? formData.tags : [];
     tags = typeof tags === "string" ? JSON.parse(tags) : tags;
+
     tags = tags.reduce((acc, curr) => {
-        acc.push(curr.value.trim().toLowerCase());
+        const tag = curr.value ? curr.value : curr;
+        acc.push(tag.trim().toLowerCase());
         return acc;
     }, []);
 
@@ -440,7 +443,6 @@ export async function updateReceipt(formData) {
 
         if (type === 'extended') {
 
-            const { items } = formData;
             let amountSum = 0;
 
             if (items.length > 0) {
@@ -492,7 +494,7 @@ export async function updateReceipt(formData) {
 
         const db = await getDatabase();
         await db.collection("receipts").updateOne(
-            { _id: new ObjectId(formData.id) },
+            { _id: new ObjectId(id) },
             { $set: body }
         )
 
@@ -634,4 +636,9 @@ export async function getIncome(timeframe) {
     const income = output.reduce((acc, currentItem) => acc + currentItem.amount, 0)
 
     return income;
+}
+
+export async function getYears() {
+    const db = await getDatabase();
+    return await db.collection("receipts").distinct("year");
 }
