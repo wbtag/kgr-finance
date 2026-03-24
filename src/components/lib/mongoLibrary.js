@@ -3,12 +3,11 @@ import { MongoClient } from "mongodb";
 import { ObjectId } from "bson";
 import { getWeek } from "date-fns";
 
-const url = process.env['MongoDbUrl'];
 let client;
 
 export async function getDatabase() {
     if (!client) {
-        client = new MongoClient(url);
+        client = new MongoClient(process.env['MongoDbUrl']);
         await client.connect();
     }
     const db = client.db("finances");
