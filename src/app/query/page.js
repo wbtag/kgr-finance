@@ -1,11 +1,13 @@
-import SpendQuery from "@/components/spendQuery/SpendQuery";
+import Query from "@/components/interfaces/Query";
 
-export default async function ReceiptPage() {
+export default async function ReceiptPage({ searchParams }) {
+
+    const params = await searchParams;
 
     return (
         <>
             <div>
-                <SpendQuery />
+                <Query period={params.period} />
             </div>
         </>
     )

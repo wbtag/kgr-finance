@@ -35,17 +35,18 @@ function MobileNavigation({ onClick, open, setOpen }) {
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex flex-row items-center pb-2">
-                        <h2 className="text-xl font-semibold w-100">Finanční portál rodiny Gregerovy</h2>
+                        <h2 className="text-xl font-semibold text-white/90 w-100">Finanční portál rodiny Gregerovy</h2>
                         <div className="flex justify-end">
                             <button onClick={() => setOpen(false)} className="p-2">
                                 <X size={24} />
                             </button>
                         </div>
                     </div>
-                    <ul className="flex flex-col gap-4 text-lg">
+                    <ul className="flex flex-col gap-4 text-lg text-white/80">
                         <li><Link href="/" onClick={() => setOpen(false)}>Přehled</Link></li>
                         <li><Link href="/receipt" onClick={() => setOpen(false)}>Nová útrata</Link></li>
                         <li><Link href="/query" onClick={() => setOpen(false)}>Detail útrat</Link></li>
+                        <li><Link href="/weekly-summary" onClick={() => setOpen(false)}>Týdenní přehled</Link></li>
                         <li><Link href="/balance" onClick={() => setOpen(false)}>Zůstatek</Link></li>
                     </ul>
                 </aside>
@@ -64,12 +65,13 @@ function DesktopNavigation() {
 
     return (
         <>
-            <nav className="hidden md:flex items-center p-4 shadow border-b-1">
-                <h1 className="text-xl font-semibold pl-6 pr-2">Finanční portál rodiny Gregerovy</h1>
-                <ul className="flex gap-10 pl-20">
+            <nav className="hidden md:flex items-center p-4 shadow border-white/40 border-b-1">
+                <h1 className="text-xl font-semibold text-white/90 pl-6 pr-2">Finanční portál rodiny Gregerovy</h1>
+                <ul className="flex gap-10 pl-20 text-white/80">
                     <li><Link href="/">Přehled</Link></li>
                     <li><Link href="/receipt">Nová útrata</Link></li>
                     <li><Link href="/query">Detail útrat</Link></li>
+                    <li><Link href="/weekly-summary">Týdenní přehled</Link></li>
                     <li><Link href="/balance">Zůstatek</Link></li>
                 </ul>
             </nav>

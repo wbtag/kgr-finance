@@ -1,17 +1,18 @@
 'use client'
 import React, { useEffect, useRef, useState } from "react";
 import Tagify from '@yaireo/tagify';
-import { useStateHandler } from "./lib/useStateHandler";
-import { createNewReceipt, getTags } from "./lib/mongoLibrary";
-import { getCategories } from "./lib/getCategories";
-import Switcher from "./Switcher";
-import { ReceiptParams, ReceiptItems } from "./ui/receiptElements";
+import { useStateHandler } from "../lib/useStateHandler";
+import { createNewReceipt, getTags } from "../lib/mongoLibrary";
+import { getCategories } from "../lib/getCategories";
+import Switcher from "../ui/Switcher";
+import { ReceiptParams, ReceiptItems } from "../ui/elements/receiptElements";
 
-export default function ReceiptInterface() {
+export default function NewReceipt() {
 
     const [receiptType, setReceiptType] = useState('simple');
     const [tags, setTags] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [saving, setSaving] = useState(false);
 
     const handleReceiptTypeChange = (e) => {
         if (e.target.name === 'extended') {
@@ -45,6 +46,8 @@ export default function ReceiptInterface() {
     const submitForm = async (e) => {
         e.preventDefault();
 
+        setSaving(true);
+
         if (
             receiptType != "extended" || 
             Number(formData.amount) - formData.items.reduce((acc, curr) => acc + Number(curr.amount), 0) === 0
@@ -66,10 +69,10 @@ export default function ReceiptInterface() {
                 window.alert(e.message);
             }
         } else {
-            window.alert("Chyba: Součet položek v rozšířené účtence se musí rovnat celkové hodnotě účtenky.")
+            window.alert("Chyba: Součet položek v rozšířené účtence se musí rovnat celkové hodnotě účtenky.");
         }
 
-
+        setSaving(false);
     };
 
     const fetchTags = async () => {
@@ -123,7 +126,11 @@ export default function ReceiptInterface() {
                         }
                     </div>
                     <div className="w-full flex mt-2 pr-12 justify-center md:justify-start">
-                        <button className="button" onClick={submitForm}>Odeslat</button>
+                        <button 
+                            className="button button--active" 
+                            onClick={submitForm}
+                            disabled={saving}    
+                        >{saving ? 'Odesílá se...' : 'Odeslat'}</button>
                     </div>
                 </div>
 
