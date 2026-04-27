@@ -5,7 +5,8 @@ import { getDatabase } from "@/components/lib/mongoLibrary";
 import { ObjectId } from "bson";
 
 const TEMP_SECRET = new TextEncoder().encode(process.env.JWT_STEP1_SECRET);
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+const REFRESH_SECRET = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET);
 
 export async function POST(req) {
 
@@ -42,16 +43,30 @@ export async function POST(req) {
         return new Response("Invalid TOTP", { status: 401 });
     }
 
-    const jwt = await new SignJWT({ id: user._id })
+    const accessToken = await new SignJWT({ id: user._id.toString() })
         .setProtectedHeader({ alg: "HS256" })
-        .sign(SECRET);
+        .setExpirationTime('1h')
+        .sign(ACCESS_SECRET);
 
-    cookieStore.set("token", jwt, {
+    const refreshToken = await new SignJWT({ id: user._id.toString() })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime('7d')
+        .sign(REFRESH_SECRET);
+
+    cookieStore.set("sid", accessToken, {
+        maxAge: 60 * 60,
+        httpOnly: true,
+        path: "/",
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV !== 'development'
+    });
+
+    cookieStore.set("rid", refreshToken, {
         maxAge: 60 * 60 * 24 * 7,
         httpOnly: true,
         path: "/",
         sameSite: 'strict',
-        secure: process.env.NODE_ENV != 'development'
+        secure: process.env.NODE_ENV !== 'development'
     });
 
     cookieStore.delete("mfap", { path: "/" });
