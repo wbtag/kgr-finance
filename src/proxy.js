@@ -22,6 +22,6 @@ export async function proxy(req) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|login).*)'
+    '/((?!api|_next/static|login|.*\\.ttf|.*\\.svg).*)'
   ]
 };
