@@ -5,6 +5,9 @@ const REFRESH_SECRET = new TextEncoder().encode(process.env.JWT_REFRESH_SECRET);
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function POST(req) {
+
+    return new Response('Going, going...', { status: 410 });
+
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get("rid")?.value;
 
