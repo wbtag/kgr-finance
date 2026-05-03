@@ -1,9 +1,7 @@
 import { getDatabase } from "@/components/lib/mongoLibrary";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
-import { SignJWT } from "jose";
-
-const SECRET = new TextEncoder().encode(process.env.JWT_STEP1_SECRET);
+import { getJWT } from "@/components/lib/jwtLibrary";
 
 export async function POST(req) {
 
@@ -22,10 +20,7 @@ export async function POST(req) {
         return new Response("Invalid credentials", { status: 401 });
     }
 
-    const mfaToken = await new SignJWT({ userId: user._id.toString() })
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime('5m') 
-        .sign(SECRET);
+    const mfaToken = await getJWT({ userId: user._id.toString() }, '5m', 'mfa');
 
     (await cookies()).set("mfap", mfaToken, {
         httpOnly: true,
@@ -36,4 +31,4 @@ export async function POST(req) {
     });
 
     return new Response("TOTP authentication required to proceed", { status: 200 });
-};
+}

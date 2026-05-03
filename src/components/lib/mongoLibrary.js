@@ -2,9 +2,14 @@
 import { MongoClient } from "mongodb";
 import { ObjectId } from "bson";
 import { getWeek } from "date-fns";
+import * as crypto from 'node:crypto';
+import { getJWT } from "./jwtLibrary";
 
 const url = process.env['MongoDbUrl'];
 let client;
+let indexesEnsured = false;
+
+const weekMilliseconds = 1000 * 60 * 60 * 24 * 7;
 
 export async function getDatabase() {
     if (!client) {
@@ -12,6 +17,13 @@ export async function getDatabase() {
         await client.connect();
     }
     const db = client.db("finances");
+    if (!indexesEnsured) {
+        await db.collection("sessions").createIndexes([
+            { key: { rid: 1 }, unique: true },
+            { key: { expiresAt: 1 }, expireAfterSeconds: 0 },
+        ]);
+        indexesEnsured = true;
+    }
     return db
 }
 
@@ -641,4 +653,59 @@ export async function getIncome(timeframe) {
 export async function getYears() {
     const db = await getDatabase();
     return await db.collection("receipts").distinct("year");
+}
+
+export async function getUser(userId) {
+    const db = await getDatabase();
+    return await db.collection("users").findOne({ _id: new ObjectId(userId) });
+}
+
+export async function createSession(userId) {
+
+    const sid = await getJWT({ userId }, '1h', 'access');
+    const rid = await getJWT({ userId }, '7d', 'refresh');
+
+    const db = await getDatabase();
+
+    await db.collection("sessions").insertOne({
+        rid: crypto.hash('sha256', rid),
+        userId,
+        expiresAt: new Date(Date.now() + weekMilliseconds),
+    });
+
+    return {
+        rid,
+        sid
+    }
+}
+
+export async function validateSession(rid, userId) {
+    const db = await getDatabase();
+    const ridHash = crypto.hash('sha256', rid);
+    const now = Date.now();
+
+    const session = await db.collection('sessions').findOne({
+        userId: { $eq: userId },
+        rid: { $eq: ridHash },
+    });
+
+    if (!session) {
+        return { ok: false };
+    }
+
+    if (session.expiresAt.getTime() < now) {
+        await deleteSession(ridHash);
+        return { ok: false };
+    }
+
+    const sid = await getJWT({ userId }, '1h', 'access');
+
+    return { ok: true, sid };
+}
+
+async function deleteSession(ridHash) {
+    const db = await getDatabase();
+
+    await db.collection("sessions")
+        .deleteOne({ rid: { $eq: ridHash } });
 }
