@@ -1,6 +1,5 @@
 'use server'
-import { MongoClient } from "mongodb";
-import { ObjectId } from "bson";
+import { MongoClient, ObjectId } from "mongodb";
 import { getWeek } from "date-fns";
 
 const url = process.env['MongoDbUrl'];
