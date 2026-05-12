@@ -1,23 +1,27 @@
-FROM node:22-alpine AS deps
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
+FROM node:24-alpine AS base
+RUN corepack enable
 
-FROM node:22-alpine AS builder
+FROM base AS deps
+WORKDIR /app
+COPY package.json pnpm-workspace.yaml .npmrc pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN pnpm build
 
-FROM node:22-alpine AS runner
+FROM base AS runner
 WORKDIR /app
-
 ENV NODE_ENV=production
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+USER nextjs
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]
