@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 import speakeasy from "speakeasy";
 import { getDatabase } from "@/components/lib/mongoLibrary";
-import { ObjectId } from "bson";
+import { ObjectId } from "mongodb";
 
 const TEMP_SECRET = new TextEncoder().encode(process.env.JWT_STEP1_SECRET);
 const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
