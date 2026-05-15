@@ -7,7 +7,9 @@ COPY package.json pnpm-workspace.yaml .npmrc pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
-WORKDIR /app
+WORKDIR /app        
+ARG NEXT_PUBLIC_FiscalMonthStart                                                                                                              
+ENV NEXT_PUBLIC_FiscalMonthStart=$NEXT_PUBLIC_FiscalMonthStart
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm build
@@ -24,4 +26,4 @@ COPY --from=builder /app/package.json ./package.json
 
 USER nextjs
 EXPOSE 3000
-CMD ["pnpm", "start"]
+CMD ["node_modules/.bin/next", "start"]
