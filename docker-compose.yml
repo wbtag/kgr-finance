@@ -1,6 +1,9 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_FiscalMonthStart: "8"
     ports:
       - "3000:3000"
     env_file:
