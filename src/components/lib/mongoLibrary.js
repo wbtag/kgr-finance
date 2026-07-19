@@ -76,7 +76,7 @@ export async function getWeeklySpendByCategory() {
     const date = new Date();
     const week = getWeek(date);
 
-    const findObj = { week: { $eq: week } };
+    const findObj = { week: { $eq: week }, year: { $eq: date.getFullYear() } };
 
     let categories = process.env['WeeklySpendCategories'] || '';
     categories = JSON.parse(categories);
